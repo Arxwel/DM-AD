@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sinalgo>
+	<ProjectSelector windowWidth="806" windowHeight="523" lastChosenProject="sample1" windowPosX="-3" windowPosY="31" isMaximized="true" selectedTab="1" />
+	<GUI windowWidth="806" windowHeight="523" windowPosX="-3" windowPosY="31" isMaximized="false" ControlPanelExpandSimulation="true" ControlPanelShowFullViewPanel="false" ControlPanelShowTextPanel="true" ControlPanelShowProjectControl="true" RunOperationIsLimited="false" helpWindowWidth="500" helpWindowHeight="500" helpWindowPosX="200" helpWindowPosY="200" helpWindowIsMaximized="false" />
+	<RandomSeed seedFromPreviousRun="1526827698848472113" />
+	<App lastSelectedFileDirectory="/home/invite/sinalgo/src/projects/dfs/" checkForUpdatesAtStartup="false" updateCheckTimeStamp="0" runCmdLineArgs="" />
+	<GenNodesDlg numNodes="100" />
+</sinalgo>
+
