@@ -3,6 +3,7 @@ package projects.dmad.nodes.nodeImplementations;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -20,7 +21,7 @@ import sinalgo.tools.Tools;
 public class DfsNode extends Node {
 
 	public int pere;
-	public List<Node> alphaVoisins;
+	public HashMap<Integer, Node> alphaVoisins;
 	public boolean visite[];
 	public Color couleur = Color.blue;
 
@@ -80,7 +81,7 @@ public class DfsNode extends Node {
 		// suite l'idée est de suivre la même numérotation de
 		// canaux que l'algorithme : de 1 à nbVoisin()
 
-		this.alphaVoisins = new ArrayList<Node>();
+		this.alphaVoisins = new HashMap<Integer,Node>();
 		this.broadcast(new InitConnectionMsg(this));
 
 //		this.visite = new boolean[this.nbVoisin() + 1];
@@ -193,16 +194,14 @@ public class DfsNode extends Node {
 
 	}
 
-	
 	public void handleInitConnectionMsg(InitConnectionMsg msg) {
-		if(msg.asw == -1) {
-			this.send(new InitConnectionMsg(msg.sender, this.getIndex(msg.sender)), msg.sender);
+		if (msg.asw == -1) {
+			this.send(new InitConnectionMsg(this, this.getIndex(msg.sender)), msg.sender);
 		} else {
-			
+			this.alphaVoisins.put(msg.asw, msg.sender);
 		}
 	}
-	
-	
+
 	// les fonctions ci-dessous ne doivent pas être modifiées
 
 	public void neighborhoodChange() {
