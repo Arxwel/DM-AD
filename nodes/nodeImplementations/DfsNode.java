@@ -21,7 +21,7 @@ import sinalgo.tools.Tools;
 public class DfsNode extends Node {
 
 	public int pere;
-	public HashMap<Integer, Node> alphaVoisins;
+	public List<Integer> alphaVoisins;
 	public boolean visite[];
 	public Color couleur = Color.blue;
 
@@ -81,7 +81,7 @@ public class DfsNode extends Node {
 		// suite l'idée est de suivre la même numérotation de
 		// canaux que l'algorithme : de 1 à nbVoisin()
 
-		this.alphaVoisins = new HashMap<Integer,Node>();
+		this.alphaVoisins = new ArrayList<Integer>();
 		this.broadcast(new InitConnectionMsg(this));
 
 //		this.visite = new boolean[this.nbVoisin() + 1];
@@ -198,7 +198,7 @@ public class DfsNode extends Node {
 		if (msg.asw == -1) {
 			this.send(new InitConnectionMsg(this, this.getIndex(msg.sender)), msg.sender);
 		} else {
-			this.alphaVoisins.put(msg.asw, msg.sender);
+			this.alphaVoisins.add(msg.asw);
 		}
 	}
 
