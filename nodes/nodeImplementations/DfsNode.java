@@ -3,12 +3,13 @@ package projects.dmad.nodes.nodeImplementations;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 
-import projects.dmad.nodes.messages.InitConnectionMsg;
-import projects.dmad.nodes.messages.TokenMessage;
+import projects.dmad.nodes.messages.DFSMessage;
 import projects.dmad.nodes.timers.InitTimer;
 import sinalgo.configuration.WrongConfigurationException;
 import sinalgo.gui.transformation.PositionTransformation;
@@ -21,8 +22,8 @@ import sinalgo.tools.Tools;
 public class DfsNode extends Node {
 
 	public int pere;
-	public List<Integer> alphaVoisins;
-	public boolean visite[];
+	public int alphaVoisins[], path[];
+	public int pathvoisins[][];
 	public Color couleur = Color.blue;
 
 	public void preStep() {
@@ -76,55 +77,57 @@ public class DfsNode extends Node {
 
 	public void start() {
 
-		// ATTENTION on alloue nbVoisin()+1 cases indicées de
-		// 0 à nbVoisin() La case 0 doit être ignorée dans la
-		// suite l'idée est de suivre la même numérotation de
-		// canaux que l'algorithme : de 1 à nbVoisin()
+		// Initialisation des attributs
+		int nbVoisin = nbVoisin();
+		int nbNode = Tools.getNodeList().size();
 
-		this.alphaVoisins = new ArrayList<Integer>();
-		this.broadcast(new InitConnectionMsg(this));
+		Random r = new Random();
 
-//		this.visite = new boolean[this.nbVoisin() + 1];
-//
-//		for (int i = 0; i <= this.nbVoisin(); i++)
-//			this.visite[i] = false;
-//
-//		if (this.ID == 1) {
-//			this.visite[1] = true;
-//			this.pere = -1; // -1 correspond à la valeur TOP dans l'algo
-//			this.send(new TokenMessage(this), this.getVoisin(1));
-//			this.inverse();
-//		} else {
-//			this.pere = 0; // 0 correspond à NIL dans l'algo
-//		}
+		this.alphaVoisins = new int[nbVoisin];
+
+		this.pathvoisins = new int[nbVoisin][nbNode];
+
+		if (this.ID == 1) {
+			this.pere = -1;
+			this.path = new int[1];
+			this.path[0] = -1;
+		} else {
+			this.pere = 0;
+			int size = r.nextInt(nbVoisin);
+			this.path = new int[size];
+			for (int i = 0; i < path.length; i++) {
+				path[i] = r.nextInt(nbVoisin + 2) - 1;
+			}
+		}
 
 	}
 
 	// fini() detecte la terminaison locale du parcours
 	boolean fini() {
-		int i = 1;
-
-		while (i <= this.nbVoisin()) {
-			if (!this.visite[i])
-				return false;
-			i++;
-		}
-
 		return true;
 	}
 
-	// nextVisite retourne le prochain canal à visiter
-	int nextVisite() {
-
-		for (int i = 1; i <= this.nbVoisin(); i++) {
-
-			if (this.pere != i && !this.visite[i]) {
-				return i;
-			}
-
+	void envoie(boolean isChild) {
+		Iterator<Edge> it = this.outgoingConnections.iterator();
+		while (it.hasNext()) {
+			Edge e = it.next();
+			this.send(new DFSMessage(this, getIndex(e.endNode), this.path, isChild), e.endNode);
 		}
+	}
 
-		return this.pere;
+	/* Retourne vrai si le path p1 et plus petit lexicographiquement que p2 */
+	boolean isShorterPath(int[] p1, int[] p2) {
+		int i = 0, j = 0;
+		int lp1 = p1.length, lp2 = p2.length;
+		while (i < lp1 && j < lp2) {
+			if (p1[i] < p2[j])
+				return true;
+			i++;
+			j++;
+		}
+		if (i == lp1)
+			return p1[i - 1] < p2[j];
+		return false;
 	}
 
 	// vous utiliserez la fonction ci-dessous pour changer la couleur
@@ -134,6 +137,21 @@ public class DfsNode extends Node {
 			this.couleur = Color.red;
 		else
 			this.couleur = Color.blue;
+	}
+
+	int[] computePath(int[] oldPath, int e) {
+		int newPath[] = oldPath;
+
+		// Si le path est déjà de longueur N on supprime le premier élément
+		if (oldPath.length == Tools.getNodeList().size()) {
+			newPath = Arrays.copyOfRange(oldPath, 1, oldPath.length - 1);
+		}
+
+		// On ajoute le nouvel élément au Path
+		newPath = Arrays.copyOf(newPath, newPath.length + 1);
+		newPath[newPath.length - 1] = e;
+
+		return newPath;
 	}
 
 	// Cette fonction gère la réception de message Elle est
@@ -148,58 +166,27 @@ public class DfsNode extends Node {
 		while (inbox.hasNext()) {
 			Message m = inbox.next();
 
-			if (m instanceof InitConnectionMsg) {
-				this.handleInitConnectionMsg((InitConnectionMsg) m);
+			if (m instanceof DFSMessage) {
+				DFSMessage msg = (DFSMessage) m;
+				if (pere == 0) {
+					pere = msg.sender.ID;
+				}
+				int canalSender = getIndex(msg.sender);
+
+				// Maj attributs
+				alphaVoisins[canalSender] = msg.idChannel;
+				pathvoisins[canalSender] = msg.path;
+
+				// Maj Path
+				int receivedpath[] = computePath(msg.path, canalSender);
+				if (!isShorterPath(path, receivedpath)) {
+					path = receivedpath;
+					pere = msg.sender.ID;
+				}
 			}
 
-//			if (m instanceof TokenMessage) { // Si le processus a reçu le jeton
-//				TokenMessage msg = (TokenMessage) m;
-//				int canal = this.getIndex(msg.sender);
-//
-//				if (this.pere == 0) {
-//					this.pere = canal;
-//					this.inverse();
-//				}
-//
-//				if (this.fini()) {
-//					// Infinite code
-//					for (int i = 0; i <= this.nbVoisin(); i++)
-//						this.visite[i] = false;
-//					this.visite[1] = true;
-//					this.send(new TokenMessage(this), this.getVoisin(1));
-//					this.inverse();
-//				} else {
-//					int suivant = this.nextVisite();
-//
-//					if (suivant != this.pere) {
-//						if (this.pere != canal && !this.visite[canal])
-//							suivant = canal;
-//						this.send(new TokenMessage(this), this.getVoisin(suivant));
-//						this.visite[suivant] = true;
-//					} else {
-//						this.send(new TokenMessage(this), this.getVoisin(this.pere));
-//						this.visite[this.pere] = true;
-//
-//						// Infinite code
-//						for (int i = 0; i <= this.nbVoisin(); i++)
-//							this.visite[i] = false;
-//						this.pere = 0;
-//					}
-//
-//				}
-//
-//			}
-
 		}
 
-	}
-
-	public void handleInitConnectionMsg(InitConnectionMsg msg) {
-		if (msg.asw == -1) {
-			this.send(new InitConnectionMsg(this, this.getIndex(msg.sender)), msg.sender);
-		} else {
-			this.alphaVoisins.add(msg.asw);
-		}
 	}
 
 	// les fonctions ci-dessous ne doivent pas être modifiées
