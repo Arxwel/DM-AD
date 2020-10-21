@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Random;
 
 import projects.dmad.nodes.messages.DFSMessage;
@@ -22,8 +22,9 @@ import sinalgo.tools.Tools;
 public class DfsNode extends Node {
 
 	public int pere;
-	public int alphaVoisins[], path[];
-	public int pathvoisins[][];
+	public int alphaVoisins[];
+	public ArrayList<Integer> path;
+	public ArrayList<ArrayList<Integer>> pathvoisins;
 	public Color couleur = Color.blue;
 
 	public void preStep() {
@@ -85,18 +86,17 @@ public class DfsNode extends Node {
 
 		this.alphaVoisins = new int[nbVoisin];
 
-		this.pathvoisins = new int[nbVoisin][nbNode];
-
+		this.pathvoisins = new ArrayList<ArrayList<Integer>>();
+		this.path = new ArrayList();
+		
 		if (this.ID == 1) {
 			this.pere = -1;
-			this.path = new int[1];
-			this.path[0] = -1;
+			this.path.add(-1);
 		} else {
 			this.pere = 0;
 			int size = r.nextInt(nbVoisin);
-			this.path = new int[size];
-			for (int i = 0; i < path.length; i++) {
-				path[i] = r.nextInt(nbVoisin + 2) - 1;
+			for (int i = 0; i < size; i++) {
+				path.add(r.nextInt(nbVoisin + 2) - 1);
 			}
 		}
 
@@ -116,18 +116,25 @@ public class DfsNode extends Node {
 	}
 
 	/* Retourne vrai si le path p1 et plus petit lexicographiquement que p2 */
-	boolean isShorterPath(int[] p1, int[] p2) {
+	public int comparisonPath(ArrayList<Integer> path2, ArrayList<Integer> receivedpath) {
 		int i = 0, j = 0;
-		int lp1 = p1.length, lp2 = p2.length;
+		int lp1 = path2.size(), lp2 = receivedpath.size();
 		while (i < lp1 && j < lp2) {
-			if (p1[i] < p2[j])
-				return true;
+			if (path2.get(i) < receivedpath.get(j))
+				return -1;
+			else if(path2.get(i) > receivedpath.get(j)) {
+				return 1;
+			}
 			i++;
 			j++;
 		}
-		if (i == lp1)
-			return p1[i - 1] < p2[j];
-		return false;
+		
+		if (lp1 == lp2)
+			return 0;
+		else if(lp1 < lp2) {
+			return -1;
+		}
+		return 1;
 	}
 
 	// vous utiliserez la fonction ci-dessous pour changer la couleur
@@ -139,17 +146,16 @@ public class DfsNode extends Node {
 			this.couleur = Color.blue;
 	}
 
-	int[] computePath(int[] oldPath, int e) {
-		int newPath[] = oldPath;
+	ArrayList<Integer> computePath(ArrayList<Integer> oldPath, int e) {
+		ArrayList<Integer> newPath = (ArrayList<Integer>) oldPath.clone();
 
 		// Si le path est déjà de longueur N on supprime le premier élément
-		if (oldPath.length == Tools.getNodeList().size()) {
-			newPath = Arrays.copyOfRange(oldPath, 1, oldPath.length - 1);
+		if (newPath.size() == Tools.getNodeList().size()) {
+			newPath.remove(0);
 		}
 
 		// On ajoute le nouvel élément au Path
-		newPath = Arrays.copyOf(newPath, newPath.length + 1);
-		newPath[newPath.length - 1] = e;
+		newPath.add(e);
 
 		return newPath;
 	}
@@ -175,11 +181,11 @@ public class DfsNode extends Node {
 
 				// Maj attributs
 				alphaVoisins[canalSender] = msg.idChannel;
-				pathvoisins[canalSender] = msg.path;
+				pathvoisins.add(canalSender, (ArrayList<Integer>) msg.path);
 
 				// Maj Path
-				int receivedpath[] = computePath(msg.path, canalSender);
-				if (!isShorterPath(path, receivedpath)) {
+				ArrayList<Integer> receivedpath = computePath(msg.path, canalSender);
+				if (comparisonPath(path, receivedpath) == 1) {
 					path = receivedpath;
 					pere = msg.sender.ID;
 				}

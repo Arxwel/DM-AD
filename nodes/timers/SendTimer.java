@@ -1,5 +1,6 @@
 package projects.dmad.nodes.timers;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import projects.dmad.nodes.nodeImplementations.DfsNode;
@@ -9,11 +10,9 @@ public class SendTimer extends Timer {
 
 	public void fire() {
 		DfsNode n=  (DfsNode) this.node;
-		int pathpere[] = Arrays.copyOfRange(n.path, 0, n.path.length-2);
-		for (int i = 0; i < n.pathvoisins.length; i++) {
-			int pathv[] = n.pathvoisins[i];
-			
-		}
+		ArrayList<Integer> pathpere = (ArrayList<Integer>) n.path.clone();
+		pathpere.remove(n.path.size() - 1);
+		//if(n.comparisonPath(pathpere, ));
 		//n.envoie();
 	}
 	
