@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.ArrayList;
 import java.util.Random;
 
 import projects.dmad.nodes.messages.DFSMessage;
@@ -22,26 +21,39 @@ import sinalgo.tools.Tools;
 
 public class DfsNode extends Node {
 
+	/**
+	 * Id du père
+	 */
 	public int                           pere;
+	/**
+	 * Tableau du alpha des voisins
+	 */
 	public int                           alphaVoisins[];
+	/**
+	 * Le chemin courant du noeud
+	 */
 	public ArrayList<Integer>            path;
+	/**
+	 * Chemins des voisins
+	 */
 	public ArrayList<ArrayList<Integer>> pathvoisins;
 	public Color                         couleur = Color.blue;
 
 	public void preStep() {}
 
-	// ATTENTION lorsque init est appelé les liens de
-	// communications n'existent pas il faut attendre une unité de
-	// temps, avant que les connections soient réalisées nous
-	// utilisons donc un timer
-
+	/**
+	 * Fonction d'initiation. Effet de bord: Lance le timer d'initiation
+	 */
 	public void init() {
 		(new InitTimer()).startRelative(1, this);
 	}
 
-	// getIndex retourne le numéro de canal correspondant au
-	// voisin n
-
+	/**
+	 * Permet d'avoir le numéro de canal d'un noeud voisin
+	 * 
+	 * @param n Noeud voisin
+	 * @return le numéro de canal
+	 */
 	public int getIndex(Node n) {
 		Iterator<Edge> iter = this.outgoingConnections.iterator();
 		int            j    = 0;
@@ -54,9 +66,12 @@ public class DfsNode extends Node {
 
 	}
 
-	// fonction inverse de getIndex : retourne le voisin
-	// correspondant au numéro de canal i
-
+	/**
+	 * Permet d'obtenir le noeud voisin en donnant le numéro de canal
+	 * 
+	 * @param i Le numéro de canal
+	 * @return Le noeud voisin
+	 */
 	public Node getVoisin(int i) {
 		if (i >= this.nbVoisin() || i < 0)
 			return this;
@@ -66,16 +81,19 @@ public class DfsNode extends Node {
 		return iter.next().endNode;
 	}
 
-	// degré du processus
-
+	/**
+	 * Retourne le nombre de voisin du noeud
+	 * 
+	 * @return
+	 */
 	public int nbVoisin() {
 		return this.outgoingConnections.size();
 	}
 
-	// Lorsque le timer précédent expire, la fonction start est
-	// appelée elle correspond ainsi à l'initialisation REELLE du
-	// processus
-
+	/**
+	 * Méthode d'initialisation du noeud. Est appelée losque le timer
+	 * d'initialisation expire.
+	 */
 	public void start() {
 
 		// Initialisation des attributs
@@ -87,16 +105,17 @@ public class DfsNode extends Node {
 		this.alphaVoisins = new int[nbVoisin];
 
 		this.pathvoisins = new ArrayList<ArrayList<Integer>>();
-		this.path        = new ArrayList();
-		
-		for(int i = 0 ; i < nbVoisin; i++) {
+		this.path        = new ArrayList<Integer>();
+
+		// Initialise les chemins des voisins
+		for (int i = 0; i < nbVoisin; i++) {
 			this.pathvoisins.add(new ArrayList<Integer>());
 		}
 
-		if (this.ID == 1) {
+		if (this.ID == 1) { // Cas du noeud racine
 			this.pere = -1;
 			this.path.add(-1);
-		} else {
+		} else { // Cas des noeuds non racine
 			this.pere = 0;
 			int size = r.nextInt(nbVoisin);
 
@@ -106,19 +125,19 @@ public class DfsNode extends Node {
 
 		}
 
+		// Démarrage du timer d'envoi
 		(new SendTimer()).startRelative(15, this);
 
 	}
 
-	// fini() detecte la terminaison locale du parcours
-	public boolean fini() {
-		return true;
-	}
-
+	/**
+	 * Méthode permettant l'envoi de l'état du noeud à ses voisins.
+	 */
 	public void envoie() {
 		Iterator<Edge>     it       = this.outgoingConnections.iterator();
 		ArrayList<Integer> pathpere = (ArrayList<Integer>) this.path.clone();
-		if(pathpere.size() > 1) {
+
+		if (pathpere.size() > 1) {
 			pathpere.remove(pathpere.size() - 1);
 		}
 
@@ -126,17 +145,11 @@ public class DfsNode extends Node {
 			Edge e     = it.next();
 			int  index = this.getIndex(e.endNode);
 
-			if (this.ID == 1) {
+			if (this.ID == 1) { // Cas noeud racine
 				this.send(new DFSMessage(this, index, this.path, false), e.endNode);
 			} else {
 				ArrayList<Integer> currentPath;
-
-				if (this.pathvoisins.size() > index) {
-					currentPath = this.pathvoisins.get(index);
-				} else {
-					currentPath = new ArrayList<Integer>();
-				}
-
+				currentPath = this.pathvoisins.get(index);
 				this.send(new DFSMessage(this, index, this.path, this.comparisonPath(pathpere, currentPath) == 0),
 						e.endNode);
 			}
@@ -144,10 +157,17 @@ public class DfsNode extends Node {
 		}
 
 		System.out.println("send");
+		(new SendTimer()).startRelative(15, this);
 
 	}
 
-	/* Retourne vrai si le path p1 et plus petit lexicographiquement que p2 */
+	/**
+	 * Compare lexicographiquement path2 à receivedpath
+	 * 
+	 * @param path2
+	 * @param receivedpath
+	 * @return 0 si égalité, -1 si path2 < receivedpath, 1 i path2 > receivedpath
+	 */
 	public int comparisonPath(ArrayList<Integer> path2, ArrayList<Integer> receivedpath) {
 		int i   = 0, j = 0;
 		int lp1 = path2.size(), lp2 = receivedpath.size();
@@ -179,6 +199,15 @@ public class DfsNode extends Node {
 			this.couleur = Color.blue;
 	}
 
+	/**
+	 * Permet d'ajouter une étape au chemin. Effet de bord: Si le nouveu chemin est
+	 * de taille n+1 (n le nombre de noeuds dans le graphe) la méthode va garder les
+	 * n derniers éléments.
+	 * 
+	 * @param oldPath Le chemin à modifier
+	 * @param e       L'étape à ajouter au chemine
+	 * @return Le nouveux chemin
+	 */
 	public ArrayList<Integer> computePath(ArrayList<Integer> oldPath, int e) {
 		ArrayList<Integer> newPath = (ArrayList<Integer>) oldPath.clone();
 
