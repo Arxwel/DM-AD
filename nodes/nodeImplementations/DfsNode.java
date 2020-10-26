@@ -21,16 +21,16 @@ import sinalgo.tools.Tools;
 
 public class DfsNode extends Node {
 
-	//Id du père
-	public int                           pere;
-	
-	//Tableau du alpha des voisins
-	public int                           alphaVoisins[];
-	
-	//Le chemin courant du noeud
-	public ArrayList<Integer>            path;
-	
-	//Chemins des voisins
+	// Id du père
+	public int pere;
+
+	// Tableau du alpha des voisins
+	public int alphaVoisins[];
+
+	// Le chemin courant du noeud
+	public ArrayList<Integer> path;
+
+	// Chemins des voisins
 	public ArrayList<ArrayList<Integer>> pathvoisins;
 	public Color                         couleur = Color.blue;
 
@@ -112,7 +112,7 @@ public class DfsNode extends Node {
 			this.path.add(-1);
 		} else { // Cas des noeuds non racine
 			this.pere = 0;
-			int size = r.nextInt(nbVoisin); //Au moins de taille 1
+			int size = r.nextInt(nbVoisin); // Au moins de taille 1
 
 			for (int i = 0; i < size; i++) {
 				path.add(r.nextInt(nbVoisin + 2) - 1);
@@ -151,7 +151,6 @@ public class DfsNode extends Node {
 
 		}
 
-		System.out.println("send");
 		(new SendTimer()).startRelative(15, this);
 
 	}
@@ -232,25 +231,26 @@ public class DfsNode extends Node {
 			if (m instanceof DFSMessage) {
 				DFSMessage msg = (DFSMessage) m;
 
-				if (pere == 0) {
+				if (msg.isChild || pere == 0) {
 					pere = msg.sender.ID;
+					this.inverse();
 				}
 
 				int canalSender = getIndex(msg.sender);
 
 				// Maj attributs
 				alphaVoisins[canalSender] = msg.idChannel;
-				
 				pathvoisins.add(canalSender, this.computePath(msg.path, alphaVoisins[canalSender]));
 
-				// Maj Path
-				ArrayList<Integer> receivedpath = computePath(msg.path, canalSender);
 
-				if (comparisonPath(path, receivedpath) == 1) {
-					path = receivedpath;
-					pere = msg.sender.ID;
-					this.inverse();
-				}
+//				// Maj Path
+//				ArrayList<Integer> receivedpath = computePath(msg.path, canalSender);
+//
+//				if (comparisonPath(path, receivedpath) == 1) {
+//					path = receivedpath;
+//					pere = msg.sender.ID;
+//					this.inverse();
+//				}
 
 			}
 
