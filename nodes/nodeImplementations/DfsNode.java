@@ -21,21 +21,16 @@ import sinalgo.tools.Tools;
 
 public class DfsNode extends Node {
 
-	/**
-	 * Id du père
-	 */
+	//Id du père
 	public int                           pere;
-	/**
-	 * Tableau du alpha des voisins
-	 */
+	
+	//Tableau du alpha des voisins
 	public int                           alphaVoisins[];
-	/**
-	 * Le chemin courant du noeud
-	 */
+	
+	//Le chemin courant du noeud
 	public ArrayList<Integer>            path;
-	/**
-	 * Chemins des voisins
-	 */
+	
+	//Chemins des voisins
 	public ArrayList<ArrayList<Integer>> pathvoisins;
 	public Color                         couleur = Color.blue;
 
@@ -117,7 +112,7 @@ public class DfsNode extends Node {
 			this.path.add(-1);
 		} else { // Cas des noeuds non racine
 			this.pere = 0;
-			int size = r.nextInt(nbVoisin);
+			int size = r.nextInt(nbVoisin); //Au moins de taille 1
 
 			for (int i = 0; i < size; i++) {
 				path.add(r.nextInt(nbVoisin + 2) - 1);
@@ -164,18 +159,18 @@ public class DfsNode extends Node {
 	/**
 	 * Compare lexicographiquement path2 à receivedpath
 	 * 
+	 * @param path1
 	 * @param path2
-	 * @param receivedpath
-	 * @return 0 si égalité, -1 si path2 < receivedpath, 1 i path2 > receivedpath
+	 * @return 0 si égalité, -1 si path1 < path2, 1 si path1 > pat2
 	 */
-	public int comparisonPath(ArrayList<Integer> path2, ArrayList<Integer> receivedpath) {
+	public int comparisonPath(ArrayList<Integer> path1, ArrayList<Integer> path2) {
 		int i   = 0, j = 0;
-		int lp1 = path2.size(), lp2 = receivedpath.size();
+		int lp1 = path1.size(), lp2 = path2.size();
 
 		while (i < lp1 && j < lp2) {
-			if (path2.get(i) < receivedpath.get(j))
+			if (path1.get(i) < path2.get(j))
 				return -1;
-			else if (path2.get(i) > receivedpath.get(j)) {
+			else if (path1.get(i) > path2.get(j)) {
 				return 1;
 			}
 			i++;
@@ -245,7 +240,8 @@ public class DfsNode extends Node {
 
 				// Maj attributs
 				alphaVoisins[canalSender] = msg.idChannel;
-				pathvoisins.add(canalSender, (ArrayList<Integer>) msg.path);
+				
+				pathvoisins.add(canalSender, this.computePath(msg.path, alphaVoisins[canalSender]));
 
 				// Maj Path
 				ArrayList<Integer> receivedpath = computePath(msg.path, canalSender);
