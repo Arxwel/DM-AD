@@ -44,7 +44,7 @@ public class DfsNode extends Node {
 
 	public int getIndex(Node n) {
 		Iterator<Edge> iter = this.outgoingConnections.iterator();
-		int            j    = 1;
+		int            j    = 0;
 
 		while (true) {
 			if (iter.next().endNode.ID == n.ID)
@@ -58,11 +58,11 @@ public class DfsNode extends Node {
 	// correspondant au numéro de canal i
 
 	public Node getVoisin(int i) {
+		if (i >= this.nbVoisin() || i < 0)
+			return this;
 		Iterator<Edge> iter = this.outgoingConnections.iterator();
-
-		for (int j = 1; j < i; j++)
+		for (int j = 0; j < i; j++)
 			iter.next();
-
 		return iter.next().endNode;
 	}
 
@@ -84,12 +84,12 @@ public class DfsNode extends Node {
 
 		Random r = new Random();
 
-		this.alphaVoisins = new int[nbVoisin+1];
+		this.alphaVoisins = new int[nbVoisin];
 
 		this.pathvoisins = new ArrayList<ArrayList<Integer>>();
 		this.path        = new ArrayList();
 		
-		for(int i = 0 ; i <= nbVoisin; i++) {
+		for(int i = 0 ; i < nbVoisin; i++) {
 			this.pathvoisins.add(new ArrayList<Integer>());
 		}
 
