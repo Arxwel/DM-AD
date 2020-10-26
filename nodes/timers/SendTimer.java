@@ -10,10 +10,7 @@ public class SendTimer extends Timer {
 
 	public void fire() {
 		DfsNode n=  (DfsNode) this.node;
-		ArrayList<Integer> pathpere = (ArrayList<Integer>) n.path.clone();
-		pathpere.remove(n.path.size() - 1);
-		//if(n.comparisonPath(pathpere, ));
-		//n.envoie();
+		n.envoie();
 	}
 	
 

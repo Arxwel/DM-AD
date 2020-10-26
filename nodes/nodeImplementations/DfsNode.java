@@ -21,14 +21,13 @@ import sinalgo.tools.Tools;
 
 public class DfsNode extends Node {
 
-	public int pere;
-	public int alphaVoisins[];
-	public ArrayList<Integer> path;
+	public int                           pere;
+	public int                           alphaVoisins[];
+	public ArrayList<Integer>            path;
 	public ArrayList<ArrayList<Integer>> pathvoisins;
-	public Color couleur = Color.blue;
+	public Color                         couleur = Color.blue;
 
-	public void preStep() {
-	}
+	public void preStep() {}
 
 	// ATTENTION lorsque init est appelé les liens de
 	// communications n'existent pas il faut attendre une unité de
@@ -44,7 +43,7 @@ public class DfsNode extends Node {
 
 	public int getIndex(Node n) {
 		Iterator<Edge> iter = this.outgoingConnections.iterator();
-		int j = 1;
+		int            j    = 1;
 
 		while (true) {
 			if (iter.next().endNode.ID == n.ID)
@@ -80,58 +79,68 @@ public class DfsNode extends Node {
 
 		// Initialisation des attributs
 		int nbVoisin = nbVoisin();
-		int nbNode = Tools.getNodeList().size();
+		int nbNode   = Tools.getNodeList().size();
 
 		Random r = new Random();
 
 		this.alphaVoisins = new int[nbVoisin];
 
 		this.pathvoisins = new ArrayList<ArrayList<Integer>>();
-		this.path = new ArrayList();
-		
+		this.path        = new ArrayList();
+
 		if (this.ID == 1) {
 			this.pere = -1;
 			this.path.add(-1);
 		} else {
 			this.pere = 0;
 			int size = r.nextInt(nbVoisin);
+
 			for (int i = 0; i < size; i++) {
 				path.add(r.nextInt(nbVoisin + 2) - 1);
 			}
+
 		}
 
 	}
 
 	// fini() detecte la terminaison locale du parcours
-	boolean fini() {
+	public boolean fini() {
 		return true;
 	}
 
-	void envoie(boolean isChild) {
-		Iterator<Edge> it = this.outgoingConnections.iterator();
+	public void envoie() {
+		Iterator<Edge>     it       = this.outgoingConnections.iterator();
+		ArrayList<Integer> pathpere = (ArrayList<Integer>) this.path.clone();
+		pathpere.remove(pathpere.size() - 1);
+
 		while (it.hasNext()) {
-			Edge e = it.next();
-			this.send(new DFSMessage(this, getIndex(e.endNode), this.path, isChild), e.endNode);
+			Edge               e           = it.next();
+			ArrayList<Integer> currentPath = this.pathvoisins.get(this.getIndex(e.endNode));
+			
+			this.send(new DFSMessage(this, getIndex(e.endNode), this.path,
+					this.comparisonPath(pathpere, currentPath) == 0), e.endNode);
 		}
+
 	}
 
 	/* Retourne vrai si le path p1 et plus petit lexicographiquement que p2 */
 	public int comparisonPath(ArrayList<Integer> path2, ArrayList<Integer> receivedpath) {
-		int i = 0, j = 0;
+		int i   = 0, j = 0;
 		int lp1 = path2.size(), lp2 = receivedpath.size();
+
 		while (i < lp1 && j < lp2) {
 			if (path2.get(i) < receivedpath.get(j))
 				return -1;
-			else if(path2.get(i) > receivedpath.get(j)) {
+			else if (path2.get(i) > receivedpath.get(j)) {
 				return 1;
 			}
 			i++;
 			j++;
 		}
-		
+
 		if (lp1 == lp2)
 			return 0;
-		else if(lp1 < lp2) {
+		else if (lp1 < lp2) {
 			return -1;
 		}
 		return 1;
@@ -146,7 +155,7 @@ public class DfsNode extends Node {
 			this.couleur = Color.blue;
 	}
 
-	ArrayList<Integer> computePath(ArrayList<Integer> oldPath, int e) {
+	public ArrayList<Integer> computePath(ArrayList<Integer> oldPath, int e) {
 		ArrayList<Integer> newPath = (ArrayList<Integer>) oldPath.clone();
 
 		// Si le path est déjà de longueur N on supprime le premier élément
@@ -174,9 +183,11 @@ public class DfsNode extends Node {
 
 			if (m instanceof DFSMessage) {
 				DFSMessage msg = (DFSMessage) m;
+
 				if (pere == 0) {
 					pere = msg.sender.ID;
 				}
+
 				int canalSender = getIndex(msg.sender);
 
 				// Maj attributs
@@ -185,10 +196,12 @@ public class DfsNode extends Node {
 
 				// Maj Path
 				ArrayList<Integer> receivedpath = computePath(msg.path, canalSender);
+
 				if (comparisonPath(path, receivedpath) == 1) {
 					path = receivedpath;
 					pere = msg.sender.ID;
 				}
+
 			}
 
 		}
@@ -197,14 +210,11 @@ public class DfsNode extends Node {
 
 	// les fonctions ci-dessous ne doivent pas être modifiées
 
-	public void neighborhoodChange() {
-	}
+	public void neighborhoodChange() {}
 
-	public void postStep() {
-	}
+	public void postStep() {}
 
-	public void checkRequirements() throws WrongConfigurationException {
-	}
+	public void checkRequirements() throws WrongConfigurationException {}
 
 	// affichage du noeud
 
