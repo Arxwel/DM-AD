@@ -24,7 +24,7 @@ public class BidirectionalArete extends BidirectionalEdge {
 		DfsNode deb=(DfsNode) this.startNode;
 		DfsNode fin=(DfsNode) this.endNode;
 	
-		if((deb.getVoisin(deb.pere)).ID == fin.ID || (fin.getVoisin(fin.pere)).ID == deb.ID){	
+		if(deb.pere > 0 && ((deb.getVoisin(deb.pere)).ID == fin.ID || (fin.getVoisin(fin.pere)).ID == deb.ID)){	
 		    Graphics2D g2=(Graphics2D) g;
 		    Stroke stroke = new BasicStroke(5f, BasicStroke.CAP_SQUARE,BasicStroke.JOIN_MITER, 10.0f); 
 		    g2.setStroke(stroke);

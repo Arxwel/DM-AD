@@ -128,10 +128,10 @@
 		<DefaultMobilityModel value="NoMobility" />
 
 		<!--Default reliability model used when none is specified-->
-		<DefaultReliabilityModel value="ReliableDelivery" />
+		<DefaultReliabilityModel value="LossyDelivery" />
 
 		<!--Default node implementation used when none is specified-->
-		<DefaultNodeImplementation value="dfs:DfsNode" />
+		<DefaultNodeImplementation value="dmad:DfsNode" />
 
 		<!--***********************************************************************-->
 		<!--  Node storage, position transformation                                -->
@@ -200,6 +200,8 @@
 	<WaitingTime distribution="Poisson" lambda="10" />
 	<MoveTime distribution="Uniform" min="5" max="20" />
 </RandomDirection>
+
+<LossyDelivery DropRate="0.5"/>
 
 <QUDG rMin="30" rMax="50" ProbabilityType="constant" connectionProbability="0.6"/>
 		</Custom>

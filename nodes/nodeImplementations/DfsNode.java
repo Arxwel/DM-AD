@@ -11,6 +11,7 @@ import java.util.Random;
 
 import projects.dmad.nodes.messages.DFSMessage;
 import projects.dmad.nodes.timers.InitTimer;
+import projects.dmad.nodes.timers.SendTimer;
 import sinalgo.configuration.WrongConfigurationException;
 import sinalgo.gui.transformation.PositionTransformation;
 import sinalgo.nodes.Node;
@@ -83,10 +84,14 @@ public class DfsNode extends Node {
 
 		Random r = new Random();
 
-		this.alphaVoisins = new int[nbVoisin];
+		this.alphaVoisins = new int[nbVoisin+1];
 
 		this.pathvoisins = new ArrayList<ArrayList<Integer>>();
 		this.path        = new ArrayList();
+		
+		for(int i = 0 ; i <= nbVoisin; i++) {
+			this.pathvoisins.add(new ArrayList<Integer>());
+		}
 
 		if (this.ID == 1) {
 			this.pere = -1;
@@ -101,6 +106,8 @@ public class DfsNode extends Node {
 
 		}
 
+		(new SendTimer()).startRelative(15, this);
+
 	}
 
 	// fini() detecte la terminaison locale du parcours
@@ -111,15 +118,32 @@ public class DfsNode extends Node {
 	public void envoie() {
 		Iterator<Edge>     it       = this.outgoingConnections.iterator();
 		ArrayList<Integer> pathpere = (ArrayList<Integer>) this.path.clone();
-		pathpere.remove(pathpere.size() - 1);
+		if(pathpere.size() > 1) {
+			pathpere.remove(pathpere.size() - 1);
+		}
 
 		while (it.hasNext()) {
-			Edge               e           = it.next();
-			ArrayList<Integer> currentPath = this.pathvoisins.get(this.getIndex(e.endNode));
-			
-			this.send(new DFSMessage(this, getIndex(e.endNode), this.path,
-					this.comparisonPath(pathpere, currentPath) == 0), e.endNode);
+			Edge e     = it.next();
+			int  index = this.getIndex(e.endNode);
+
+			if (this.ID == 1) {
+				this.send(new DFSMessage(this, index, this.path, false), e.endNode);
+			} else {
+				ArrayList<Integer> currentPath;
+
+				if (this.pathvoisins.size() > index) {
+					currentPath = this.pathvoisins.get(index);
+				} else {
+					currentPath = new ArrayList<Integer>();
+				}
+
+				this.send(new DFSMessage(this, index, this.path, this.comparisonPath(pathpere, currentPath) == 0),
+						e.endNode);
+			}
+
 		}
+
+		System.out.println("send");
 
 	}
 
@@ -200,6 +224,7 @@ public class DfsNode extends Node {
 				if (comparisonPath(path, receivedpath) == 1) {
 					path = receivedpath;
 					pere = msg.sender.ID;
+					this.inverse();
 				}
 
 			}
