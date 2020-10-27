@@ -192,6 +192,7 @@ public class DfsNode extends Node {
 		int lp1 = path1.size(), lp2 = path2.size();
 
 		while (i < lp1 && j < lp2) {
+//			System.out.println(path1.get(i) + " " + path2.get(j));
 			if (path1.get(i) < path2.get(j))
 				return -1;
 			else if (path1.get(i) > path2.get(j)) {
@@ -200,7 +201,7 @@ public class DfsNode extends Node {
 			i++;
 			j++;
 		}
-
+		
 		if (lp1 == lp2)
 			return 0;
 		else if (lp1 < lp2) {
@@ -233,7 +234,6 @@ public class DfsNode extends Node {
 	 */
 	public ArrayList<Integer> computePath(ArrayList<Integer> oldPath, int e) {
 		ArrayList<Integer> newPath = (ArrayList<Integer>) oldPath.clone();
-
 		// Si le path est déjà de longueur N on supprime le premier élément
 		if (newPath.size() == Tools.getNodeList().size()) {
 			newPath.remove(0);
@@ -259,18 +259,21 @@ public class DfsNode extends Node {
 
 			if (m instanceof DFSMessage) {
 				DFSMessage msg = (DFSMessage) m;
+//				System.out.println(ID + " " + msg);
 				this.inverse();
 				int                canalSender = getIndex(msg.sender);
 				ArrayList<Integer> newPath     = this.computePath(msg.path, alphaVoisins[canalSender]);
 
 				alphaVoisins[canalSender] = msg.idChannel;
-				path                      = newPath;
+				path                      = (ArrayList<Integer>) newPath.clone();
 				pathvoisins.add(canalSender, newPath);
 
 				if (msg.isChild && ID > 1) {
 					ArrayList<Integer> tmp = (ArrayList<Integer>) this.path.clone();
 					tmp.remove(tmp.size() - 1);
+					
 					if (this.comparaisonPath(tmp, msg.path) == 0) {
+						System.out.println("ok");
 						this.pere    = msg.sender.ID;
 						this.couleur = Color.yellow;
 						System.out.println(ID + ": " + msg.sender.ID);
@@ -278,21 +281,19 @@ public class DfsNode extends Node {
 
 				}
 
-				// Maj attributs
-
-//				// Maj Path
-//				ArrayList<Integer> receivedpath = computePath(msg.path, canalSender);
-//
-//				if (comparisonPath(path, receivedpath) == 1) {
-//					path = receivedpath;
-//					pere = msg.sender.ID;
-//					this.inverse();
-//				}
-
 			}
 
 		}
 
+	}
+	
+	public String displayPath(ArrayList<Integer> p) {
+		String r = "";
+		Iterator ite = p.iterator();
+		while(ite.hasNext()) {
+			r += ite.next() + ", ";
+		}
+		return r;
 	}
 
 	// les fonctions ci-dessous ne doivent pas être modifiées

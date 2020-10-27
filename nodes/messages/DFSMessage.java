@@ -23,5 +23,10 @@ public class DFSMessage extends Message {
 	public Message clone() {
 		return new DFSMessage(sender, idChannel, path, isChild);
 	}
+	
+	@Override
+	public String toString() {
+		return sender.ID + " " + idChannel + " " + isChild;
+	}
 
 }
