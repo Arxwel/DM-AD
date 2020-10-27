@@ -259,7 +259,6 @@ public class DfsNode extends Node {
 
 			if (m instanceof DFSMessage) {
 				DFSMessage msg = (DFSMessage) m;
-//				System.out.println(ID + " " + msg);
 				this.inverse();
 				int                canalSender = getIndex(msg.sender);
 				ArrayList<Integer> newPath     = this.computePath(msg.path, alphaVoisins[canalSender]);
@@ -273,7 +272,6 @@ public class DfsNode extends Node {
 					tmp.remove(tmp.size() - 1);
 					
 					if (this.comparaisonPath(tmp, msg.path) == 0) {
-						System.out.println("ok");
 						this.pere    = msg.sender.ID;
 						this.couleur = Color.yellow;
 						System.out.println(ID + ": " + msg.sender.ID);
