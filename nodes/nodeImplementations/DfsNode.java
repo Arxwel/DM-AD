@@ -336,8 +336,12 @@ public class DfsNode extends Node {
 
 	public void draw(Graphics g, PositionTransformation pt, boolean highlight) {
 		this.setColor(this.couleur);
-		String text = "" + this.ID;
+		String text = "" + this.ID + ":" + pere;
 		super.drawNodeAsDiskWithText(g, pt, highlight, text, 20, Color.black);
+	}
+	
+	public String toString() {
+		return ID + "->" + pere;
 	}
 
 }
