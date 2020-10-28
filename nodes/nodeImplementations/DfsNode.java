@@ -68,11 +68,16 @@ public class DfsNode extends Node {
 	 * @return Le noeud voisin
 	 */
 	public Node getVoisin(int i) {
-		if (i >= this.nbVoisin() || i < 0)
+
+		if (i < 0) {
 			return this;
+		}
+
 		Iterator<Edge> iter = this.outgoingConnections.iterator();
+
 		for (int j = 1; j < i; j++)
 			iter.next();
+
 		return iter.next().endNode;
 	}
 
@@ -170,7 +175,10 @@ public class DfsNode extends Node {
 			boolean isChild = false;
 
 			if (this.allAlphaIsKnown()) {
-				isChild = (index == this.indexOfMinAlpha());
+				ArrayList<Integer> tmp = this.computePath(this.pathvoisins.get(index), this.alphaVoisins[index]);
+				int min = this.getIndexMinPath();
+				isChild = this.comparaisonPath(tmp, this.pathvoisins.get(min)) <= 0;
+//				isChild = (index == this.indexOfMinAlpha());
 			}
 
 			this.send(new DFSMessage(this, index, this.path, isChild), e.endNode);
@@ -192,7 +200,6 @@ public class DfsNode extends Node {
 		int lp1 = path1.size(), lp2 = path2.size();
 
 		while (i < lp1 && j < lp2) {
-//			System.out.println(path1.get(i) + " " + path2.get(j));
 			if (path1.get(i) < path2.get(j))
 				return -1;
 			else if (path1.get(i) > path2.get(j)) {
@@ -201,7 +208,7 @@ public class DfsNode extends Node {
 			i++;
 			j++;
 		}
-		
+
 		if (lp1 == lp2)
 			return 0;
 		else if (lp1 < lp2) {
@@ -234,6 +241,7 @@ public class DfsNode extends Node {
 	 */
 	public ArrayList<Integer> computePath(ArrayList<Integer> oldPath, int e) {
 		ArrayList<Integer> newPath = (ArrayList<Integer>) oldPath.clone();
+
 		// Si le path est déjà de longueur N on supprime le premier élément
 		if (newPath.size() == Tools.getNodeList().size()) {
 			newPath.remove(0);
@@ -265,17 +273,19 @@ public class DfsNode extends Node {
 
 				alphaVoisins[canalSender] = msg.idChannel;
 				path                      = (ArrayList<Integer>) newPath.clone();
-				pathvoisins.add(canalSender, newPath);
+				pathvoisins.set(canalSender, newPath);
 
-				if (msg.isChild && ID > 1) {
-					ArrayList<Integer> tmp = (ArrayList<Integer>) this.path.clone();
-					tmp.remove(tmp.size() - 1);
-					
-					if (this.comparaisonPath(tmp, msg.path) == 0) {
-						this.pere    = msg.sender.ID;
-						this.couleur = Color.yellow;
-						System.out.println(ID + ": " + msg.sender.ID);
-					}
+				if (msg.isChild && this.pere == 0) {
+					this.pere    = msg.sender.ID;
+					this.couleur = Color.yellow;
+//					ArrayList<Integer> tmp = (ArrayList<Integer>) this.path.clone();
+//					tmp.remove(tmp.size() - 1);
+//
+//					if (this.comparaisonPath(tmp, msg.path) == 0) {
+//						this.pere    = msg.sender.ID;
+//						this.couleur = Color.yellow;
+//						System.out.println(ID + ": " + msg.sender.ID);
+//					}
 
 				}
 
@@ -284,13 +294,31 @@ public class DfsNode extends Node {
 		}
 
 	}
-	
+
+	public int getIndexMinPath() {
+		int                index = 1;
+		ArrayList<Integer> tmp   = this.pathvoisins.get(index);
+
+		for (int i = index; i < this.pathvoisins.size(); i++) {
+
+			if (this.comparaisonPath(this.pathvoisins.get(i), tmp) == -1) {
+				tmp   = this.pathvoisins.get(i);
+				index = i;
+			}
+
+		}
+
+		return index;
+	}
+
 	public String displayPath(ArrayList<Integer> p) {
-		String r = "";
+		String   r   = "";
 		Iterator ite = p.iterator();
-		while(ite.hasNext()) {
+
+		while (ite.hasNext()) {
 			r += ite.next() + ", ";
 		}
+
 		return r;
 	}
 
