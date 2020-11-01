@@ -129,6 +129,11 @@ public class DfsNode extends Node {
 
 	}
 
+	/**
+	 * Permet de savoir si le tableau des alpha voisins est complet ou pas
+	 * 
+	 * @return True si tableau complet false sinon
+	 */
 	public boolean allAlphaIsKnown() {
 
 		for (int i = 1; i < this.alphaVoisins.length; i++) {
@@ -140,22 +145,6 @@ public class DfsNode extends Node {
 		}
 
 		return true;
-	}
-
-	public int indexOfMinAlpha() {
-		int index = 1;
-		int tmp   = this.alphaVoisins[index];
-
-		for (int i = index; i < this.alphaVoisins.length; i++) {
-
-			if (this.alphaVoisins[i] < tmp) {
-				tmp   = this.alphaVoisins[i];
-				index = i;
-			}
-
-		}
-
-		return index;
 	}
 
 	/**
@@ -174,14 +163,16 @@ public class DfsNode extends Node {
 			int     index     = this.getIndex(e.endNode);
 			boolean uAreChild = false;
 
+			/*
+			 * Lorsque nous avons tous les alphas voisins, ça veut dire que tous les voisins
+			 * ont envoyé au moins un fois un message. Donc que le noeud courant a reçu tous
+			 * les path de ses voisins. Ainsi nous pouvons dire si le voisin à qui nous
+			 * allons envoyer le message est le fils du noeud courant.
+			 */
 			if (this.allAlphaIsKnown()) {
 				ArrayList<Integer> tmp = (ArrayList<Integer>) this.pathvoisins.get(index).clone();
 				tmp.remove(tmp.size() - 1);
 				uAreChild = this.comparaisonPath(path, tmp) == 0;
-//				ArrayList<Integer> tmp = this.computePath(this.pathvoisins.get(index), this.alphaVoisins[index]);
-//				int min = this.getIndexMinPath();
-//				uAreChild = this.comparaisonPath(tmp, this.pathvoisins.get(min)) <= 0;
-//				isChild = (index == this.indexOfMinAlpha());
 			}
 
 			this.send(new DFSMessage(this, index, this.path, uAreChild), e.endNode);
@@ -276,16 +267,31 @@ public class DfsNode extends Node {
 				ArrayList<Integer> newPath = this.computePath(msg.path, alphaVoisins[canalSender]);
 				pathvoisins.set(canalSender, newPath);
 
-				if (this.pere == 0) {
+				/*
+				 * Si le noeud courant est le fils de l'envoyeur ou si son père n'est pas encore
+				 * définit alors on définit le père du noeud courant.
+				 */
+				if (msg.uAreChild || this.pere == 0) {
 					this.pere    = msg.sender.ID;
 					this.couleur = Color.yellow;
 					path         = (ArrayList<Integer>) newPath.clone();
 
 				}
 
+				/**
+				 * Si le path reçu est plus petit lexicographiquement que la path courant alors
+				 * nous mettons à jour le path du noeud courant et le père. Sinon nous
+				 * récupérons le path minimal (lexicographiquement) des neouds voisins (de
+				 * l'instant t) et mettons à jour l'état du noeud courant.
+				 */
 				if (comparaisonPath(path, newPath) > 0) {
 					this.pere = msg.sender.ID;
 					path      = (ArrayList<Integer>) newPath.clone();
+
+				} else if (ID > 1) { // Noeud non racine seulement
+					int i = getIndexMinPath();
+					path = pathvoisins.get(i);
+					pere = getVoisin(i).ID;
 				}
 
 			}
@@ -294,6 +300,12 @@ public class DfsNode extends Node {
 
 	}
 
+	/**
+	 * Permet d'obtenir l'index dans (le numéro de canal) du voisin ayant le path
+	 * minimal lexicographiquement.
+	 * 
+	 * @return numéro de canal (ou l'index pour alphaVoisins et pathvoisins)
+	 */
 	public int getIndexMinPath() {
 		int                index = 1;
 		ArrayList<Integer> tmp   = this.pathvoisins.get(index);
@@ -309,8 +321,14 @@ public class DfsNode extends Node {
 
 		return index;
 	}
-
-	public String displayPath(ArrayList<Integer> p) {
+	
+	
+	/**
+	 * Méthode pour convertir un path en string
+	 * @param p Path à convertir
+	 * @return
+	 */
+	public static String pathToString(ArrayList<Integer> p) {
 		String   r   = "";
 		Iterator ite = p.iterator();
 
