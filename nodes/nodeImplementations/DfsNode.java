@@ -32,9 +32,10 @@ public class DfsNode extends Node {
 
 	// Chemins des voisins
 	public ArrayList<ArrayList<Integer>> pathvoisins;
-	public Color                         couleur = Color.blue;
+	public Color couleur = Color.blue;
 
-	public void preStep() {}
+	public void preStep() {
+	}
 
 	/**
 	 * Fonction d'initiation. Effet de bord: Lance le timer d'initiation
@@ -51,7 +52,7 @@ public class DfsNode extends Node {
 	 */
 	public int getIndex(Node n) {
 		Iterator<Edge> iter = this.outgoingConnections.iterator();
-		int            j    = 1;
+		int j = 1;
 
 		while (true) {
 			if (iter.next().endNode.ID == n.ID)
@@ -97,12 +98,12 @@ public class DfsNode extends Node {
 	public void start() {
 
 		// Initialisation des attributs
-		int    nbVoisin = nbVoisin() + 1;
-		Random r        = new Random();
+		int nbVoisin = nbVoisin() + 1;
+		Random r = new Random();
 
 		this.alphaVoisins = new int[nbVoisin];
-		this.pathvoisins  = new ArrayList<ArrayList<Integer>>();
-		this.path         = new ArrayList<Integer>();
+		this.pathvoisins = new ArrayList<ArrayList<Integer>>();
+		this.path = new ArrayList<Integer>();
 
 		// Initialise les chemins des voisins
 		for (int i = 0; i < nbVoisin; i++) {
@@ -111,7 +112,7 @@ public class DfsNode extends Node {
 		}
 
 		if (this.ID == 1) { // Cas du noeud racine
-			this.pere    = -1;
+			this.pere = -1;
 			this.couleur = Color.yellow;
 			this.path.add(-1);
 		} else { // Cas des noeuds non racine
@@ -144,12 +145,12 @@ public class DfsNode extends Node {
 
 	public int indexOfMinAlpha() {
 		int index = 1;
-		int tmp   = this.alphaVoisins[index];
+		int tmp = this.alphaVoisins[index];
 
 		for (int i = index; i < this.alphaVoisins.length; i++) {
 
 			if (this.alphaVoisins[i] < tmp) {
-				tmp   = this.alphaVoisins[i];
+				tmp = this.alphaVoisins[i];
 				index = i;
 			}
 
@@ -162,7 +163,7 @@ public class DfsNode extends Node {
 	 * Méthode permettant l'envoi de l'état du noeud à ses voisins.
 	 */
 	public void envoie() {
-		Iterator<Edge>     it       = this.outgoingConnections.iterator();
+		Iterator<Edge> it = this.outgoingConnections.iterator();
 		ArrayList<Integer> pathpere = (ArrayList<Integer>) this.path.clone();
 
 		if (pathpere.size() > 1) {
@@ -170,18 +171,21 @@ public class DfsNode extends Node {
 		}
 
 		while (it.hasNext()) {
-			Edge    e       = it.next();
-			int     index   = this.getIndex(e.endNode);
-			boolean isChild = false;
+			Edge e = it.next();
+			int index = this.getIndex(e.endNode);
+			boolean uAreChild = false;
 
 			if (this.allAlphaIsKnown()) {
-				ArrayList<Integer> tmp = this.computePath(this.pathvoisins.get(index), this.alphaVoisins[index]);
-				int min = this.getIndexMinPath();
-				isChild = this.comparaisonPath(tmp, this.pathvoisins.get(min)) <= 0;
+				ArrayList<Integer> tmp = (ArrayList<Integer>) this.pathvoisins.get(index).clone();
+				tmp.remove(tmp.size()-1);
+				uAreChild = this.comparaisonPath(path, tmp) == 0;
+//				ArrayList<Integer> tmp = this.computePath(this.pathvoisins.get(index), this.alphaVoisins[index]);
+//				int min = this.getIndexMinPath();
+//				uAreChild = this.comparaisonPath(tmp, this.pathvoisins.get(min)) <= 0;
 //				isChild = (index == this.indexOfMinAlpha());
 			}
 
-			this.send(new DFSMessage(this, index, this.path, isChild), e.endNode);
+			this.send(new DFSMessage(this, index, this.path, uAreChild), e.endNode);
 		}
 
 		(new SendTimer()).startRelative(15, this);
@@ -196,7 +200,7 @@ public class DfsNode extends Node {
 	 * @return 0 si égalité, -1 si path1 < path2, 1 si path1 > pat2
 	 */
 	public int comparaisonPath(ArrayList<Integer> path1, ArrayList<Integer> path2) {
-		int i   = 0, j = 0;
+		int i = 0, j = 0;
 		int lp1 = path1.size(), lp2 = path2.size();
 
 		while (i < lp1 && j < lp2) {
@@ -268,27 +272,21 @@ public class DfsNode extends Node {
 			if (m instanceof DFSMessage) {
 				DFSMessage msg = (DFSMessage) m;
 				this.inverse();
-				int                canalSender = getIndex(msg.sender);
-				ArrayList<Integer> newPath     = this.computePath(msg.path, alphaVoisins[canalSender]);
-
+				int canalSender = getIndex(msg.sender);
 				alphaVoisins[canalSender] = msg.idChannel;
-				path                      = (ArrayList<Integer>) newPath.clone();
+				ArrayList<Integer> newPath = this.computePath(msg.path, alphaVoisins[canalSender]);
 				pathvoisins.set(canalSender, newPath);
-
-				if (msg.isChild && this.pere == 0) {
-					this.pere    = msg.sender.ID;
+				
+				if (this.pere == 0) {
+					this.pere = msg.sender.ID;
 					this.couleur = Color.yellow;
-//					ArrayList<Integer> tmp = (ArrayList<Integer>) this.path.clone();
-//					tmp.remove(tmp.size() - 1);
-//
-//					if (this.comparaisonPath(tmp, msg.path) == 0) {
-//						this.pere    = msg.sender.ID;
-//						this.couleur = Color.yellow;
-//						System.out.println(ID + ": " + msg.sender.ID);
-//					}
+					path = (ArrayList<Integer>) newPath.clone();
 
 				}
-
+				if (comparaisonPath(path, newPath) > 0) {
+					this.pere = msg.sender.ID;
+					path = (ArrayList<Integer>) newPath.clone();
+				}
 			}
 
 		}
@@ -296,13 +294,13 @@ public class DfsNode extends Node {
 	}
 
 	public int getIndexMinPath() {
-		int                index = 1;
-		ArrayList<Integer> tmp   = this.pathvoisins.get(index);
+		int index = 1;
+		ArrayList<Integer> tmp = this.pathvoisins.get(index);
 
 		for (int i = index; i < this.pathvoisins.size(); i++) {
 
 			if (this.comparaisonPath(this.pathvoisins.get(i), tmp) == -1) {
-				tmp   = this.pathvoisins.get(i);
+				tmp = this.pathvoisins.get(i);
 				index = i;
 			}
 
@@ -312,7 +310,7 @@ public class DfsNode extends Node {
 	}
 
 	public String displayPath(ArrayList<Integer> p) {
-		String   r   = "";
+		String r = "";
 		Iterator ite = p.iterator();
 
 		while (ite.hasNext()) {
@@ -328,15 +326,17 @@ public class DfsNode extends Node {
 		this.start();
 	}
 
-	public void postStep() {}
+	public void postStep() {
+	}
 
-	public void checkRequirements() throws WrongConfigurationException {}
+	public void checkRequirements() throws WrongConfigurationException {
+	}
 
 	// affichage du noeud
 
 	public void draw(Graphics g, PositionTransformation pt, boolean highlight) {
 		this.setColor(this.couleur);
-		String text = "" + this.ID;
+		String text = "" + this.ID;// + ",p="+this.pere;
 		super.drawNodeAsDiskWithText(g, pt, highlight, text, 20, Color.black);
 	}
 
