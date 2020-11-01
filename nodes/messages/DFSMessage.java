@@ -7,7 +7,7 @@ import sinalgo.nodes.Node;
 import sinalgo.nodes.messages.Message;
 
 public class DFSMessage extends Message {
-	public boolean isChild;
+	public boolean uAreChild;
 	public int idChannel;
 	public ArrayList<Integer> path;
 	public Node sender;
@@ -16,17 +16,17 @@ public class DFSMessage extends Message {
 		this.sender = sender;
 		this.idChannel = id;
 		this.path = path;
-		this.isChild = isChild;
+		this.uAreChild = isChild;
 	}
 
 	@Override
 	public Message clone() {
-		return new DFSMessage(sender, idChannel, path, isChild);
+		return new DFSMessage(sender, idChannel, path, uAreChild);
 	}
 	
 	@Override
 	public String toString() {
-		return sender.ID + " " + idChannel + " " + isChild;
+		return sender.ID + " " + idChannel + " " + uAreChild;
 	}
 
 }

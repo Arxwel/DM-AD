@@ -170,18 +170,21 @@ public class DfsNode extends Node {
 		}
 
 		while (it.hasNext()) {
-			Edge    e       = it.next();
-			int     index   = this.getIndex(e.endNode);
-			boolean isChild = false;
+			Edge    e         = it.next();
+			int     index     = this.getIndex(e.endNode);
+			boolean uAreChild = false;
 
 			if (this.allAlphaIsKnown()) {
-				ArrayList<Integer> tmp = this.computePath(this.pathvoisins.get(index), this.alphaVoisins[index]);
-				int min = this.getIndexMinPath();
-				isChild = this.comparaisonPath(tmp, this.pathvoisins.get(min)) <= 0;
+				ArrayList<Integer> tmp = (ArrayList<Integer>) this.pathvoisins.get(index).clone();
+				tmp.remove(tmp.size() - 1);
+				uAreChild = this.comparaisonPath(path, tmp) == 0;
+//				ArrayList<Integer> tmp = this.computePath(this.pathvoisins.get(index), this.alphaVoisins[index]);
+//				int min = this.getIndexMinPath();
+//				uAreChild = this.comparaisonPath(tmp, this.pathvoisins.get(min)) <= 0;
 //				isChild = (index == this.indexOfMinAlpha());
 			}
 
-			this.send(new DFSMessage(this, index, this.path, isChild), e.endNode);
+			this.send(new DFSMessage(this, index, this.path, uAreChild), e.endNode);
 		}
 
 		(new SendTimer()).startRelative(15, this);
@@ -268,25 +271,21 @@ public class DfsNode extends Node {
 			if (m instanceof DFSMessage) {
 				DFSMessage msg = (DFSMessage) m;
 				this.inverse();
-				int                canalSender = getIndex(msg.sender);
-				ArrayList<Integer> newPath     = this.computePath(msg.path, alphaVoisins[canalSender]);
-
+				int canalSender = getIndex(msg.sender);
 				alphaVoisins[canalSender] = msg.idChannel;
-				path                      = (ArrayList<Integer>) newPath.clone();
+				ArrayList<Integer> newPath = this.computePath(msg.path, alphaVoisins[canalSender]);
 				pathvoisins.set(canalSender, newPath);
 
-				if (msg.isChild && this.pere == 0) {
+				if (this.pere == 0) {
 					this.pere    = msg.sender.ID;
 					this.couleur = Color.yellow;
-//					ArrayList<Integer> tmp = (ArrayList<Integer>) this.path.clone();
-//					tmp.remove(tmp.size() - 1);
-//
-//					if (this.comparaisonPath(tmp, msg.path) == 0) {
-//						this.pere    = msg.sender.ID;
-//						this.couleur = Color.yellow;
-//						System.out.println(ID + ": " + msg.sender.ID);
-//					}
+					path         = (ArrayList<Integer>) newPath.clone();
 
+				}
+
+				if (comparaisonPath(path, newPath) > 0) {
+					this.pere = msg.sender.ID;
+					path      = (ArrayList<Integer>) newPath.clone();
 				}
 
 			}
@@ -336,10 +335,10 @@ public class DfsNode extends Node {
 
 	public void draw(Graphics g, PositionTransformation pt, boolean highlight) {
 		this.setColor(this.couleur);
-		String text = "" + this.ID + ":" + pere;
+		String text = "" + this.ID;// + ",p="+this.pere;
 		super.drawNodeAsDiskWithText(g, pt, highlight, text, 20, Color.black);
 	}
-	
+
 	public String toString() {
 		return ID + "->" + pere;
 	}
