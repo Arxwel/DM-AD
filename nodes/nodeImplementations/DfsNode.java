@@ -23,6 +23,9 @@ public class DfsNode extends Node {
 
 	// Id du père
 	public int pere;
+	
+	//Tableau des ids des noeuds enfants
+	public ArrayList<Integer> children;
 
 	// Tableau du alpha des voisins
 	public int alphaVoisins[];
@@ -33,6 +36,9 @@ public class DfsNode extends Node {
 	// Chemins des voisins
 	public ArrayList<ArrayList<Integer>> pathvoisins;
 	public Color                         couleur = Color.blue;
+	
+	//Hauteur du noeud dans l'arbre couvrant
+	public int height;
 
 	public void preStep() {}
 
@@ -103,6 +109,7 @@ public class DfsNode extends Node {
 		this.alphaVoisins = new int[nbVoisin];
 		this.pathvoisins  = new ArrayList<ArrayList<Integer>>();
 		this.path         = new ArrayList<Integer>();
+		this.children = new ArrayList<Integer>();
 
 		// Initialise les chemins des voisins
 		for (int i = 0; i < nbVoisin; i++) {
@@ -114,6 +121,7 @@ public class DfsNode extends Node {
 			this.pere    = -1;
 			this.couleur = Color.yellow;
 			this.path.add(-1);
+			this.height = 0;
 		} else { // Cas des noeuds non racine
 			this.pere = 0;
 			int size = r.nextInt(nbVoisin); // Au moins de taille 1
@@ -121,6 +129,7 @@ public class DfsNode extends Node {
 			for (int i = 0; i < size; i++) {
 				path.add(r.nextInt(nbVoisin + 2) - 1);
 			}
+			this.height = this.path.size() - 1;
 
 		}
 
@@ -170,9 +179,25 @@ public class DfsNode extends Node {
 			 * allons envoyer le message est le fils du noeud courant.
 			 */
 			if (this.allAlphaIsKnown()) {
-				ArrayList<Integer> tmp = (ArrayList<Integer>) this.pathvoisins.get(index).clone();
-				tmp.remove(tmp.size() - 1);
-				uAreChild = this.comparaisonPath(path, tmp) == 0;
+				ArrayList<Integer> p, q;
+				q = (ArrayList<Integer>) this.pathvoisins.get(index).clone();
+				p = path;
+				//p = this.computePath(path, this.alphaVoisins[index]);
+				//q = this.pathvoisins.get(index);
+				//q.remove(q.size() - 1);
+				uAreChild = this.comparaisonPath(p, q) == 0;
+				Integer idNode = e.endNode.ID;
+				System.out.println("path " + this.ID + " : " + pathToString(p));
+				System.out.println("NeighourPath : " + idNode + " : " + pathToString(q));
+				if(uAreChild) {
+					if(!this.children.contains(idNode)) {
+						this.children.add(idNode);
+					}
+					System.out.println(this.ID + " (add) : " + this.children);
+				} else {
+					this.children.remove(idNode);
+					System.out.println(this.ID + " (rmd) : " + this.children);
+				}
 			}
 
 			this.send(new DFSMessage(this, index, this.path, uAreChild), e.endNode);
@@ -293,6 +318,7 @@ public class DfsNode extends Node {
 					path = pathvoisins.get(i);
 					pere = getVoisin(i).ID;
 				}
+				this.height = this.path.size() - 1;
 
 			}
 
@@ -353,7 +379,7 @@ public class DfsNode extends Node {
 
 	public void draw(Graphics g, PositionTransformation pt, boolean highlight) {
 		this.setColor(this.couleur);
-		String text = "" + this.ID;// + ",p="+this.pere;
+		String text = "" + this.ID + ",h="+this.height;// + ",p="+this.pere;
 		super.drawNodeAsDiskWithText(g, pt, highlight, text, 20, Color.black);
 	}
 
