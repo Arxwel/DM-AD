@@ -164,7 +164,7 @@ public class DfsNode extends Node {
 		while (it.hasNext()) {
 			Edge    e         = it.next();
 			int     index     = this.getIndex(e.endNode);
-			boolean uAreChild = false;
+			boolean isChild = false;
 
 			/*
 			 * Lorsque nous avons tous les alphas voisins, ça veut dire que tous les voisins
@@ -174,23 +174,9 @@ public class DfsNode extends Node {
 			 */
 			if (this.allAlphaIsKnown()) {
 				ArrayList<Integer> tmp = this.pathvoisins.get(index);
-				uAreChild = this.comparaisonPath(this.computePath(path, alphaVoisins[index]), tmp) == 0;
-				int y = this.children.indexOf(e.endNode.ID);
-
-				if (!uAreChild) {
-					if (y == -1)
-						this.children.add(e.endNode.ID);
-				} else {
-
-					if (y > -1) {
-						this.children.remove(y);
-					}
-
-				}
-
+				isChild = this.comparaisonPath(path, computePath(tmp, alphaVoisins[index])) == 0;
 			}
-			System.out.println(ID + " : " + pathToString(this.children));
-			this.send(new DFSMessage(this, index, this.path, uAreChild), e.endNode);
+			this.send(new DFSMessage(this, index, this.path, isChild), e.endNode);
 		}
 
 		(new SendTimer()).startRelative(15, this);
@@ -279,14 +265,24 @@ public class DfsNode extends Node {
 
 				int canalSender = getIndex(msg.sender);
 				alphaVoisins[canalSender] = msg.idChannel;
-				ArrayList<Integer> newPath = this.computePath(msg.path, canalSender);
+				ArrayList<Integer> newPath = msg.path;
 				pathvoisins.set(canalSender, newPath);
 
+				if(msg.isChild) {
+					if(this.children.indexOf(msg.sender.ID) == -1) {
+						this.children.add(msg.sender.ID);
+					}
+				} else {
+					if(this.children.indexOf(msg.sender.ID) > -1) {
+						this.children.remove((Integer) msg.sender.ID);
+					}
+				}
+				
 				if (ID > 1) { // Noeud non racine seulement
 					int i = getIndexMinPath();
 
-					if (this.comparaisonPath(this.path, this.pathvoisins.get(i)) != 0) {
-						this.path    = this.pathvoisins.get(i);
+					if (this.comparaisonPath(this.path, computePath(pathvoisins.get(i), alphaVoisins[i])) != 0) {
+						this.path    = computePath(pathvoisins.get(i), alphaVoisins[i]);
 						this.pere    = this.getVoisin(i).ID;
 						this.couleur = Color.yellow;
 					}
@@ -299,7 +295,7 @@ public class DfsNode extends Node {
 		}
 
 	}
-
+	
 	/**
 	 * Permet d'obtenir l'index dans (le numéro de canal) du voisin ayant le path
 	 * minimal lexicographiquement.
