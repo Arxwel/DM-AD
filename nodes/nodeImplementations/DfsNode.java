@@ -34,6 +34,11 @@ public class DfsNode extends Node {
 	public ArrayList<ArrayList<Integer>> pathvoisins;
 	public Color                         couleur = Color.blue;
 
+	public int back;
+	public int height;
+
+	public ArrayList<Integer> childdren;
+
 	public void preStep() {}
 
 	/**
@@ -103,6 +108,7 @@ public class DfsNode extends Node {
 		this.alphaVoisins = new int[nbVoisin];
 		this.pathvoisins  = new ArrayList<ArrayList<Integer>>();
 		this.path         = new ArrayList<Integer>();
+		this.childdren    = new ArrayList<Integer>();
 
 		// Initialise les chemins des voisins
 		for (int i = 0; i < nbVoisin; i++) {
@@ -112,6 +118,7 @@ public class DfsNode extends Node {
 
 		if (this.ID == 1) { // Cas du noeud racine
 			this.pere    = -1;
+			this.height  = 0;
 			this.couleur = Color.yellow;
 			this.path.add(-1);
 		} else { // Cas des noeuds non racine
@@ -122,6 +129,7 @@ public class DfsNode extends Node {
 				path.add(r.nextInt(nbVoisin + 2) - 1);
 			}
 
+			this.height = this.path.size() - 1;
 		}
 
 		// Démarrage du timer d'envoi
@@ -152,12 +160,7 @@ public class DfsNode extends Node {
 	 */
 	public void envoie() {
 		Iterator<Edge>     it       = this.outgoingConnections.iterator();
-		ArrayList<Integer> pathpere = (ArrayList<Integer>) this.path.clone();
-
-		if (pathpere.size() > 1) {
-			pathpere.remove(pathpere.size() - 1);
-		}
-
+		
 		while (it.hasNext()) {
 			Edge    e         = it.next();
 			int     index     = this.getIndex(e.endNode);
@@ -171,8 +174,8 @@ public class DfsNode extends Node {
 			 */
 			if (this.allAlphaIsKnown()) {
 				ArrayList<Integer> tmp = (ArrayList<Integer>) this.pathvoisins.get(index).clone();
-				tmp.remove(tmp.size() - 1);
 				uAreChild = this.comparaisonPath(path, tmp) == 0;
+				System.out.println(uAreChild);
 			}
 
 			this.send(new DFSMessage(this, index, this.path, uAreChild), e.endNode);
@@ -261,39 +264,22 @@ public class DfsNode extends Node {
 
 			if (m instanceof DFSMessage) {
 				DFSMessage msg = (DFSMessage) m;
-				this.inverse();
+
 				int canalSender = getIndex(msg.sender);
 				alphaVoisins[canalSender] = msg.idChannel;
 				ArrayList<Integer> newPath = this.computePath(msg.path, alphaVoisins[canalSender]);
 				pathvoisins.set(canalSender, newPath);
 
-				/*
-				 * Si le noeud courant est le fils de l'envoyeur ou si son père n'est pas encore
-				 * définit alors on définit le père du noeud courant.
-				 */
-				if (msg.uAreChild || this.pere == 0) {
-					this.pere    = msg.sender.ID;
-					this.couleur = Color.yellow;
-					path         = (ArrayList<Integer>) newPath.clone();
-
-				}
-
-				/**
-				 * Si le path reçu est plus petit lexicographiquement que la path courant alors
-				 * nous mettons à jour le path du noeud courant et le père. Sinon nous
-				 * récupérons le path minimal (lexicographiquement) des neouds voisins (de
-				 * l'instant t) et mettons à jour l'état du noeud courant.
-				 */
-				if (comparaisonPath(path, newPath) > 0) {
-					this.pere = msg.sender.ID;
-					path      = (ArrayList<Integer>) newPath.clone();
-
-				} else if (ID > 1) { // Noeud non racine seulement
+				if (ID > 1) { // Noeud non racine seulement
 					int i = getIndexMinPath();
-					path = pathvoisins.get(i);
-					pere = getVoisin(i).ID;
+					if(this.comparaisonPath(this.path, this.pathvoisins.get(i)) != 0) {
+						this.path = this.pathvoisins.get(i);
+						this.pere = this.getVoisin(i).ID;
+						this.couleur = Color.yellow; 
+					}
 				}
 
+				this.height = this.path.size() - 1;
 			}
 
 		}
@@ -321,10 +307,10 @@ public class DfsNode extends Node {
 
 		return index;
 	}
-	
-	
+
 	/**
 	 * Méthode pour convertir un path en string
+	 * 
 	 * @param p Path à convertir
 	 * @return
 	 */
@@ -353,7 +339,7 @@ public class DfsNode extends Node {
 
 	public void draw(Graphics g, PositionTransformation pt, boolean highlight) {
 		this.setColor(this.couleur);
-		String text = "" + this.ID;// + ",p="+this.pere;
+		String text = "" + this.ID + ":" + height;// + ",p="+this.pere;
 		super.drawNodeAsDiskWithText(g, pt, highlight, text, 20, Color.black);
 	}
 
