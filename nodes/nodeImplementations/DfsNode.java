@@ -37,7 +37,7 @@ public class DfsNode extends Node {
 	public int back;
 	public int height;
 
-	public ArrayList<Integer> childdren;
+	public ArrayList<Integer> children;
 
 	public void preStep() {}
 
@@ -108,7 +108,7 @@ public class DfsNode extends Node {
 		this.alphaVoisins = new int[nbVoisin];
 		this.pathvoisins  = new ArrayList<ArrayList<Integer>>();
 		this.path         = new ArrayList<Integer>();
-		this.childdren    = new ArrayList<Integer>();
+		this.children     = new ArrayList<Integer>();
 
 		// Initialise les chemins des voisins
 		for (int i = 0; i < nbVoisin; i++) {
@@ -159,8 +159,8 @@ public class DfsNode extends Node {
 	 * Méthode permettant l'envoi de l'état du noeud à ses voisins.
 	 */
 	public void envoie() {
-		Iterator<Edge>     it       = this.outgoingConnections.iterator();
-		
+		Iterator<Edge> it = this.outgoingConnections.iterator();
+
 		while (it.hasNext()) {
 			Edge    e         = it.next();
 			int     index     = this.getIndex(e.endNode);
@@ -173,11 +173,23 @@ public class DfsNode extends Node {
 			 * allons envoyer le message est le fils du noeud courant.
 			 */
 			if (this.allAlphaIsKnown()) {
-				ArrayList<Integer> tmp = (ArrayList<Integer>) this.pathvoisins.get(index).clone();
-				uAreChild = this.comparaisonPath(path, tmp) == 0;
-				System.out.println(uAreChild);
-			}
+				ArrayList<Integer> tmp = this.pathvoisins.get(index);
+				uAreChild = this.comparaisonPath(this.computePath(path, alphaVoisins[index]), tmp) == 0;
+				int y = this.children.indexOf(e.endNode.ID);
 
+				if (!uAreChild) {
+					if (y == -1)
+						this.children.add(e.endNode.ID);
+				} else {
+
+					if (y > -1) {
+						this.children.remove(y);
+					}
+
+				}
+
+			}
+			System.out.println(ID + " : " + pathToString(this.children));
 			this.send(new DFSMessage(this, index, this.path, uAreChild), e.endNode);
 		}
 
@@ -267,16 +279,18 @@ public class DfsNode extends Node {
 
 				int canalSender = getIndex(msg.sender);
 				alphaVoisins[canalSender] = msg.idChannel;
-				ArrayList<Integer> newPath = this.computePath(msg.path, alphaVoisins[canalSender]);
+				ArrayList<Integer> newPath = this.computePath(msg.path, canalSender);
 				pathvoisins.set(canalSender, newPath);
 
 				if (ID > 1) { // Noeud non racine seulement
 					int i = getIndexMinPath();
-					if(this.comparaisonPath(this.path, this.pathvoisins.get(i)) != 0) {
-						this.path = this.pathvoisins.get(i);
-						this.pere = this.getVoisin(i).ID;
-						this.couleur = Color.yellow; 
+
+					if (this.comparaisonPath(this.path, this.pathvoisins.get(i)) != 0) {
+						this.path    = this.pathvoisins.get(i);
+						this.pere    = this.getVoisin(i).ID;
+						this.couleur = Color.yellow;
 					}
+
 				}
 
 				this.height = this.path.size() - 1;
@@ -327,9 +341,7 @@ public class DfsNode extends Node {
 
 	// les fonctions ci-dessous ne doivent pas être modifiées
 
-	public void neighborhoodChange() {
-		this.start();
-	}
+	public void neighborhoodChange() {}
 
 	public void postStep() {}
 
