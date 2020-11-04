@@ -131,7 +131,6 @@ public class DfsNode extends Node {
 			for (int i = 0; i < size; i++) {
 				path.add(r.nextInt(nbVoisin + 2) - 1);
 			}
-
 			this.height = this.path.size() - 1;
 		}
 
@@ -145,7 +144,7 @@ public class DfsNode extends Node {
 	 * 
 	 * @return True si tableau complet false sinon
 	 */
-	public boolean allAlphaIsKnown() {
+	public boolean allAlphaAreKnown() {
 
 		for (int i = 1; i < this.alphaVoisins.length; i++) {
 
@@ -167,7 +166,7 @@ public class DfsNode extends Node {
 		while (it.hasNext()) {
 			Edge    e       = it.next();
 			int     index   = this.getIndex(e.endNode);
-			boolean isChild = false;
+			boolean isChild = this.comparaisonPath(path, computePath(this.pathvoisins.get(index), alphaVoisins[index])) == 0;
 
 			/*
 			 * Lorsque nous avons tous les alphas voisins, ça veut dire que tous les voisins
@@ -175,10 +174,6 @@ public class DfsNode extends Node {
 			 * les path de ses voisins. Ainsi nous pouvons dire si le voisin à qui nous
 			 * allons envoyer le message est le fils du noeud courant.
 			 */
-			if (this.allAlphaIsKnown()) {
-				ArrayList<Integer> tmp = this.pathvoisins.get(index);
-				isChild = this.comparaisonPath(path, computePath(tmp, alphaVoisins[index])) == 0;
-			}
 
 			this.send(new DFSMessage(this, index, this.back, this.path, isChild), e.endNode);
 		}
@@ -320,18 +315,18 @@ public class DfsNode extends Node {
 		tmp[tmp.length - 1] = height;
 
 		// Calcul du nouveau back
-		int min = 999; // valeur à 999 pour être sûr qu'on obtienne le back minimum
+		int min = Tools.getNodeList().size(); // valeur à N pour être sûr qu'on obtienne le back minimum
 
 		for (int i = 0; i < tmp.length; i++) {
 
 			// tmp[i] > -1 est là pour ignorer les valeurs inconnues
-			if (tmp[i] < min && tmp[i] > -1) {
+			if (tmp[i] > -1 && tmp[i] < min) {
 				min = tmp[i];
 			}
 
 		}
-
-		back = min;
+		if(back != min)
+			back = min;
 	}
 
 	/**
@@ -341,11 +336,12 @@ public class DfsNode extends Node {
 	public boolean isCutNode() {
 		boolean res = false;
 
+		//Cas de la racine
 		if (ID == 1) {
 			res = children.size() >= 2;
 		} else {
 
-			for (int i = 0; i < childrenBack.length && !res; i++) {
+			for (int i = 1; i < childrenBack.length && !res; i++) {
 				//  childrenBack[i] > -1 est là pour ignorer les valeurs inconnues
 				res = childrenBack[i] > -1 && childrenBack[i] >= height;
 			}
@@ -363,9 +359,7 @@ public class DfsNode extends Node {
 	 *         fait parti de l'arbre
 	 */
 	public boolean isNonTreeNode(int id) {
-		boolean res = true;
-		res &= this.pere != id && this.children.indexOf(id) < 0;
-		return res;
+		return this.pere != id && this.children.indexOf(id) < 0;
 	}
 
 	public void displayNonTreeHeight() {
