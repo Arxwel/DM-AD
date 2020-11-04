@@ -141,24 +141,6 @@ public class DfsNode extends Node {
 	}
 
 	/**
-	 * Permet de savoir si le tableau des alpha voisins est complet ou pas
-	 * 
-	 * @return True si tableau complet false sinon
-	 */
-	public boolean allAlphaIsKnown() {
-
-		for (int i = 1; i < this.alphaVoisins.length; i++) {
-
-			if (this.alphaVoisins[i] == 0) {
-				return false;
-			}
-
-		}
-
-		return true;
-	}
-
-	/**
 	 * Méthode permettant l'envoi de l'état du noeud à ses voisins.
 	 */
 	public void envoie() {
@@ -169,16 +151,8 @@ public class DfsNode extends Node {
 			int     index   = this.getIndex(e.endNode);
 			boolean isChild = false;
 
-			/*
-			 * Lorsque nous avons tous les alphas voisins, ça veut dire que tous les voisins
-			 * ont envoyé au moins un fois un message. Donc que le noeud courant a reçu tous
-			 * les path de ses voisins. Ainsi nous pouvons dire si le voisin à qui nous
-			 * allons envoyer le message est le fils du noeud courant.
-			 */
-			if (this.allAlphaIsKnown()) {
-				ArrayList<Integer> tmp = this.pathvoisins.get(index);
-				isChild = this.comparaisonPath(path, computePath(tmp, alphaVoisins[index])) == 0;
-			}
+			ArrayList<Integer> tmp = this.pathvoisins.get(index);
+			isChild = this.comparaisonPath(path, computePath(tmp, alphaVoisins[index])) == 0;
 
 			this.send(new DFSMessage(this, index, this.back, this.path, isChild), e.endNode);
 		}
@@ -336,6 +310,7 @@ public class DfsNode extends Node {
 
 	/**
 	 * Vérifie que le noeud courant est un cut node ou pas
+	 * 
 	 * @return True si c'est un cut node false sinon
 	 */
 	public boolean isCutNode() {
@@ -346,7 +321,7 @@ public class DfsNode extends Node {
 		} else {
 
 			for (int i = 0; i < childrenBack.length && !res; i++) {
-				//  childrenBack[i] > -1 est là pour ignorer les valeurs inconnues
+				// childrenBack[i] > -1 est là pour ignorer les valeurs inconnues
 				res = childrenBack[i] > -1 && childrenBack[i] >= height;
 			}
 
