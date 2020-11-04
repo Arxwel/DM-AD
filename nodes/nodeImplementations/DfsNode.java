@@ -287,19 +287,10 @@ public class DfsNode extends Node {
 					}
 
 				}
-				
-				// ALGO2
-				if(this.children.indexOf(msg.sender.ID) > -1) {
-					this.childrenBack[canalSender] = msg.back;
-				}else {
-					this.childrenBack[canalSender] = -1;
-				}
 
-				if(this.isNonTreeNode(msg.sender.ID)) {
-					this.nonTreeHeight[canalSender] = msg.path.size() - 1;
-				} else {
-					this.nonTreeHeight[canalSender] = -1;
-				}
+				// ALGO2
+				this.childrenBack[canalSender]  = this.children.indexOf(msg.sender.ID) > -1 ? msg.back : -1;
+				this.nonTreeHeight[canalSender] = this.isNonTreeNode(msg.sender.ID) ? msg.path.size() - 1 : -1;
 
 				if (ID > 1) { // Noeud non racine seulement
 					int i = getIndexMinPath();
@@ -312,42 +303,57 @@ public class DfsNode extends Node {
 
 					this.updateBack();
 				}
-				
-				
+
 				this.couleur = isCutNode() ? Color.red : Color.yellow;
 			}
 
 		}
 
 	}
-	
+
+	/**
+	 * Met à jour le back
+	 */
 	public void updateBack() {
-		int tmp[] = new int[childrenBack.length + nonTreeHeight.length +1];
+		// Création de l'esemble qui va permettre le calcul du nouveau back
+		int tmp[] = new int[childrenBack.length + nonTreeHeight.length + 1];
 		System.arraycopy(childrenBack, 0, tmp, 0, childrenBack.length);
 		System.arraycopy(nonTreeHeight, 0, tmp, childrenBack.length, nonTreeHeight.length);
 		tmp[tmp.length - 1] = height;
-		
-		int min = 999;
-		for(int i = 0; i < tmp.length; i++) {
-			if(tmp[i] < min && tmp[i] > -1) {
+
+		// Calcul du nouveau back
+		int min = 999; // valeur à 999 pour être sûr qu'on obtienne le back minimum
+
+		for (int i = 0; i < tmp.length; i++) {
+
+			// tmp[i] > -1 est là pour ignorer les valeurs inconnues
+			if (tmp[i] < min && tmp[i] > -1) {
 				min = tmp[i];
 			}
+
 		}
-		
+
 		back = min;
 	}
-	
+
+	/**
+	 * Vérifie que le noeud courant est un cut node ou pas
+	 * @return True si c'est un cut node false sinon
+	 */
 	public boolean isCutNode() {
 		boolean res = false;
-		
-		if(ID == 1) {
+
+		if (ID == 1) {
 			res = children.size() >= 2;
 		} else {
-			for(int i = 0; i < childrenBack.length && !res; i++) {
-				res = childrenBack[i] > -1 && childrenBack[i] >= height;   
+
+			for (int i = 0; i < childrenBack.length && !res; i++) {
+				//  childrenBack[i] > -1 est là pour ignorer les valeurs inconnues
+				res = childrenBack[i] > -1 && childrenBack[i] >= height;
 			}
+
 		}
-		
+
 		return res;
 	}
 
