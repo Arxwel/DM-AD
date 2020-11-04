@@ -284,12 +284,20 @@ public class DfsNode extends Node {
 					if (this.comparaisonPath(this.path, computePath(pathvoisins.get(i), alphaVoisins[i])) != 0) {
 						this.path    = computePath(pathvoisins.get(i), alphaVoisins[i]);
 						this.pere    = this.getVoisin(i).ID;
-						this.couleur = Color.yellow;
+						this.height = this.path.size() - 1;
 					}
 
 				}
-
-				this.height = this.path.size() - 1;
+				
+				
+				// Cut node for the root
+				boolean isCutNode = false;
+				if(ID == 1) {
+					isCutNode = this.children.size() >= 2;
+				}
+				
+				
+				this.couleur = isCutNode ? Color.red : Color.yellow;
 			}
 
 		}
