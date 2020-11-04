@@ -27,7 +27,8 @@ public class BidirectionalArete extends BidirectionalEdge {
 			Graphics2D g2     = (Graphics2D) g;
 			Stroke     stroke = new BasicStroke(5f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f);
 			g2.setStroke(stroke);
-			Arrow.drawArrow(fromX, fromY, pt.guiX, pt.guiY, g2, pt, Color.blue);
+			Color color = deb.height == deb.back ? Color.orange : Color.blue;
+			Arrow.drawArrow(fromX, fromY, pt.guiX, pt.guiY, g2, pt, color);
 		} else {
 			Graphics2D g2     = (Graphics2D) g;
 			Stroke     stroke = new BasicStroke(1f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER, 10.0f);
