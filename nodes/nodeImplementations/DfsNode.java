@@ -36,9 +36,9 @@ public class DfsNode extends Node {
 
 	public int                back;
 	public int                height;
-	public ArrayList<Integer> childrenBack;
 	public ArrayList<Integer> children;
-	public int nonTreeHeight[];
+	public int                childrenBack[];
+	public int                nonTreeHeight[];
 
 	public void preStep() {}
 
@@ -108,16 +108,17 @@ public class DfsNode extends Node {
 
 		this.alphaVoisins  = new int[nbVoisin];
 		this.nonTreeHeight = new int[nbVoisin];
+		this.childrenBack  = new int[nbVoisin];
 		this.pathvoisins   = new ArrayList<ArrayList<Integer>>();
 		this.path          = new ArrayList<Integer>();
 		this.children      = new ArrayList<Integer>();
-		this.childrenBack  = new ArrayList<Integer>();
 
 		// Initialise les chemins des voisins
 		for (int i = 0; i < nbVoisin; i++) {
 			this.pathvoisins.add(new ArrayList<Integer>());
-			this.alphaVoisins[i] = 0;
+			this.alphaVoisins[i]  = 0;
 			this.nonTreeHeight[i] = -1;
+			this.childrenBack[i]  = -1;
 		}
 
 		if (this.ID == 1) { // Cas du noeud racine
@@ -181,7 +182,7 @@ public class DfsNode extends Node {
 				isChild = this.comparaisonPath(path, computePath(tmp, alphaVoisins[index])) == 0;
 			}
 
-			this.send(new DFSMessage(this, index, this.path, isChild), e.endNode);
+			this.send(new DFSMessage(this, index, this.back, this.path, isChild), e.endNode);
 		}
 
 		(new SendTimer()).startRelative(15, this);
@@ -286,6 +287,19 @@ public class DfsNode extends Node {
 					}
 
 				}
+				
+				// ALGO2
+				if(this.children.indexOf(msg.sender.ID) > -1) {
+					this.childrenBack[canalSender] = msg.back;
+				}else {
+					this.childrenBack[canalSender] = -1;
+				}
+
+				if(this.isNonTreeNode(msg.sender.ID)) {
+					this.nonTreeHeight[canalSender] = msg.path.size() - 1;
+				} else {
+					this.nonTreeHeight[canalSender] = -1;
+				}
 
 				if (ID > 1) { // Noeud non racine seulement
 					int i = getIndexMinPath();
@@ -296,38 +310,67 @@ public class DfsNode extends Node {
 						this.height = this.path.size() - 1;
 					}
 
-				}
-
-				if(this.isNonTreeNode(msg.sender.ID)) {
-					this.nonTreeHeight[canalSender] = ((DfsNode) msg.sender).height;
-					displayNonTreeHeight();
+					this.updateBack();
 				}
 				
-				// Cut node for the root
-				boolean isCutNode = false;
-
-				if (ID == 1) {
-					isCutNode = this.children.size() >= 2;
-				}
-
-				this.couleur = isCutNode ? Color.red : Color.yellow;
+				
+				this.couleur = isCutNode() ? Color.red : Color.yellow;
 			}
 
 		}
 
 	}
 	
+	public void updateBack() {
+		int tmp[] = new int[childrenBack.length + nonTreeHeight.length +1];
+		System.arraycopy(childrenBack, 0, tmp, 0, childrenBack.length);
+		System.arraycopy(nonTreeHeight, 0, tmp, childrenBack.length, nonTreeHeight.length);
+		tmp[tmp.length - 1] = height;
+		
+		int min = 999;
+		for(int i = 0; i < tmp.length; i++) {
+			if(tmp[i] < min && tmp[i] > -1) {
+				min = tmp[i];
+			}
+		}
+		
+		back = min;
+	}
+	
+	public boolean isCutNode() {
+		boolean res = false;
+		
+		if(ID == 1) {
+			res = children.size() >= 2;
+		} else {
+			for(int i = 0; i < childrenBack.length && !res; i++) {
+				res = childrenBack[i] > -1 && childrenBack[i] >= height;   
+			}
+		}
+		
+		return res;
+	}
+
+	/**
+	 * Méthode qui permet de savoir si un noeud ne fait pas parti de l'arbre
+	 * 
+	 * @param id Id du noeud à tester
+	 * @return true si le noeud ne fait pas parti de l'arbre et false si le noeud
+	 *         fait parti de l'arbre
+	 */
 	public boolean isNonTreeNode(int id) {
 		boolean res = true;
 		res &= this.pere != id && this.children.indexOf(id) < 0;
 		return res;
 	}
-	
+
 	public void displayNonTreeHeight() {
-		System.out.print(ID+": ");
-		for(int i = 1; i < nonTreeHeight.length; i++) {
-			System.out.print(nonTreeHeight[i]+" ");
+		System.out.print(ID + ": ");
+
+		for (int i = 1; i < nonTreeHeight.length; i++) {
+			System.out.print(nonTreeHeight[i] + " ");
 		}
+
 		System.out.println();
 	}
 
@@ -387,7 +430,7 @@ public class DfsNode extends Node {
 	}
 
 	public String toString() {
-		return ID + "->" + pere;
+		return ID + "\nh:" + height + "\nb:" + back + "\np: " + pere;
 	}
 
 }
