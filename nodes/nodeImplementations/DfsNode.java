@@ -149,10 +149,8 @@ public class DfsNode extends Node {
 		while (it.hasNext()) {
 			Edge    e       = it.next();
 			int     index   = this.getIndex(e.endNode);
-			boolean isChild = false;
-
-			ArrayList<Integer> tmp = this.pathvoisins.get(index);
-			isChild = this.comparaisonPath(path, computePath(tmp, alphaVoisins[index])) == 0;
+			boolean isChild = this.comparaisonPath(path,
+					computePath(this.pathvoisins.get(index), alphaVoisins[index])) == 0;
 
 			this.send(new DFSMessage(this, index, this.back, this.path, isChild), e.endNode);
 		}
@@ -255,7 +253,7 @@ public class DfsNode extends Node {
 				} else {
 
 					if (this.children.indexOf(msg.sender.ID) > -1) {
-						this.children.remove((Integer) msg.sender.ID);
+						this.children.remove(this.children.indexOf(msg.sender.ID));
 					}
 
 				}
@@ -288,18 +286,18 @@ public class DfsNode extends Node {
 	 */
 	public void updateBack() {
 		// Création de l'esemble qui va permettre le calcul du nouveau back
-		int tmp[] = new int[childrenBack.length + nonTreeHeight.length + 1];
-		System.arraycopy(childrenBack, 0, tmp, 0, childrenBack.length);
-		System.arraycopy(nonTreeHeight, 0, tmp, childrenBack.length, nonTreeHeight.length);
+		int tmp[] = new int[childrenBack.length - 1 + nonTreeHeight.length - 1 + 1];
+		System.arraycopy(childrenBack, 1, tmp, 0, childrenBack.length - 1);
+		System.arraycopy(nonTreeHeight, 1, tmp, childrenBack.length - 1, nonTreeHeight.length - 1);
 		tmp[tmp.length - 1] = height;
 
 		// Calcul du nouveau back
-		int min = 999; // valeur à 999 pour être sûr qu'on obtienne le back minimum
+		int min = Tools.getNodeList().size(); // valeur à N pour être sûr qu'on obtienne le back minimum
 
 		for (int i = 0; i < tmp.length; i++) {
 
 			// tmp[i] > -1 est là pour ignorer les valeurs inconnues
-			if (tmp[i] < min && tmp[i] > -1) {
+			if (tmp[i] > -1 && tmp[i] < min) {
 				min = tmp[i];
 			}
 
@@ -316,13 +314,13 @@ public class DfsNode extends Node {
 	public boolean isCutNode() {
 		boolean res = false;
 
+		// Cas de la racine
 		if (ID == 1) {
 			res = children.size() >= 2;
 		} else {
 
-			for (int i = 0; i < childrenBack.length && !res; i++) {
-				// childrenBack[i] > -1 est là pour ignorer les valeurs inconnues
-				res = childrenBack[i] > -1 && childrenBack[i] >= height;
+			for (int i = 1; i < childrenBack.length && !res; i++) {
+				res = childrenBack[i] >= height;
 			}
 
 		}
@@ -338,9 +336,7 @@ public class DfsNode extends Node {
 	 *         fait parti de l'arbre
 	 */
 	public boolean isNonTreeNode(int id) {
-		boolean res = true;
-		res &= this.pere != id && this.children.indexOf(id) < 0;
-		return res;
+		return this.pere != id && this.children.indexOf(id) < 0;
 	}
 
 	public void displayNonTreeHeight() {
