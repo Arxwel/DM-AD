@@ -34,10 +34,11 @@ public class DfsNode extends Node {
 	public ArrayList<ArrayList<Integer>> pathvoisins;
 	public Color                         couleur = Color.blue;
 
-	public int back;
-	public int height;
-
+	public int                back;
+	public int                height;
+	public ArrayList<Integer> childrenBack;
 	public ArrayList<Integer> children;
+	public int nonTreeHeight[];
 
 	public void preStep() {}
 
@@ -105,15 +106,18 @@ public class DfsNode extends Node {
 		int    nbVoisin = nbVoisin() + 1;
 		Random r        = new Random();
 
-		this.alphaVoisins = new int[nbVoisin];
-		this.pathvoisins  = new ArrayList<ArrayList<Integer>>();
-		this.path         = new ArrayList<Integer>();
-		this.children     = new ArrayList<Integer>();
+		this.alphaVoisins  = new int[nbVoisin];
+		this.nonTreeHeight = new int[nbVoisin];
+		this.pathvoisins   = new ArrayList<ArrayList<Integer>>();
+		this.path          = new ArrayList<Integer>();
+		this.children      = new ArrayList<Integer>();
+		this.childrenBack  = new ArrayList<Integer>();
 
 		// Initialise les chemins des voisins
 		for (int i = 0; i < nbVoisin; i++) {
 			this.pathvoisins.add(new ArrayList<Integer>());
 			this.alphaVoisins[i] = 0;
+			this.nonTreeHeight[i] = -1;
 		}
 
 		if (this.ID == 1) { // Cas du noeud racine
@@ -162,8 +166,8 @@ public class DfsNode extends Node {
 		Iterator<Edge> it = this.outgoingConnections.iterator();
 
 		while (it.hasNext()) {
-			Edge    e         = it.next();
-			int     index     = this.getIndex(e.endNode);
+			Edge    e       = it.next();
+			int     index   = this.getIndex(e.endNode);
 			boolean isChild = false;
 
 			/*
@@ -176,6 +180,7 @@ public class DfsNode extends Node {
 				ArrayList<Integer> tmp = this.pathvoisins.get(index);
 				isChild = this.comparaisonPath(path, computePath(tmp, alphaVoisins[index])) == 0;
 			}
+
 			this.send(new DFSMessage(this, index, this.path, isChild), e.endNode);
 		}
 
@@ -268,35 +273,43 @@ public class DfsNode extends Node {
 				ArrayList<Integer> newPath = msg.path;
 				pathvoisins.set(canalSender, newPath);
 
-				if(msg.isChild) {
-					if(this.children.indexOf(msg.sender.ID) == -1) {
+				if (msg.isChild) {
+
+					if (this.children.indexOf(msg.sender.ID) == -1) {
 						this.children.add(msg.sender.ID);
 					}
+
 				} else {
-					if(this.children.indexOf(msg.sender.ID) > -1) {
+
+					if (this.children.indexOf(msg.sender.ID) > -1) {
 						this.children.remove((Integer) msg.sender.ID);
 					}
+
 				}
-				
+
 				if (ID > 1) { // Noeud non racine seulement
 					int i = getIndexMinPath();
 
 					if (this.comparaisonPath(this.path, computePath(pathvoisins.get(i), alphaVoisins[i])) != 0) {
-						this.path    = computePath(pathvoisins.get(i), alphaVoisins[i]);
-						this.pere    = this.getVoisin(i).ID;
+						this.path   = computePath(pathvoisins.get(i), alphaVoisins[i]);
+						this.pere   = this.getVoisin(i).ID;
 						this.height = this.path.size() - 1;
 					}
 
 				}
-				
+
+				if(this.isNonTreeNode(msg.sender.ID)) {
+					this.nonTreeHeight[canalSender] = ((DfsNode) msg.sender).height;
+					displayNonTreeHeight();
+				}
 				
 				// Cut node for the root
 				boolean isCutNode = false;
-				if(ID == 1) {
+
+				if (ID == 1) {
 					isCutNode = this.children.size() >= 2;
 				}
-				
-				
+
 				this.couleur = isCutNode ? Color.red : Color.yellow;
 			}
 
@@ -304,6 +317,20 @@ public class DfsNode extends Node {
 
 	}
 	
+	public boolean isNonTreeNode(int id) {
+		boolean res = true;
+		res &= this.pere != id && this.children.indexOf(id) < 0;
+		return res;
+	}
+	
+	public void displayNonTreeHeight() {
+		System.out.print(ID+": ");
+		for(int i = 1; i < nonTreeHeight.length; i++) {
+			System.out.print(nonTreeHeight[i]+" ");
+		}
+		System.out.println();
+	}
+
 	/**
 	 * Permet d'obtenir l'index dans (le numéro de canal) du voisin ayant le path
 	 * minimal lexicographiquement.
