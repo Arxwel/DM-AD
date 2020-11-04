@@ -118,7 +118,6 @@ public class DfsNode extends Node {
 			this.nonTreeHeight[i] = -1;
 			this.childrenBack[i]  = -1;
 		}
-
 		if (this.ID == 1) { // Cas du noeud racine
 			this.pere    = -1;
 			this.height  = 0;
@@ -132,6 +131,7 @@ public class DfsNode extends Node {
 				path.add(r.nextInt(nbVoisin + 2) - 1);
 			}
 			this.height = this.path.size() - 1;
+			this.back = 999;
 		}
 
 		// Démarrage du timer d'envoi
@@ -276,14 +276,14 @@ public class DfsNode extends Node {
 				} else {
 
 					if (this.children.indexOf(msg.sender.ID) > -1) {
-						this.children.remove((Integer) msg.sender.ID);
+						this.children.remove(this.children.indexOf(msg.sender.ID));
 					}
 
 				}
 
 				// ALGO2
 				this.childrenBack[canalSender]  = this.children.indexOf(msg.sender.ID) > -1 ? msg.back : -1;
-				this.nonTreeHeight[canalSender] = this.isNonTreeNode(msg.sender.ID) ? msg.path.size() - 1 : -1;
+				this.nonTreeHeight[canalSender] = this.isNonTreeNode(msg.sender.ID) ? msg.path.size() -2 : -1;
 
 				if (ID > 1) { // Noeud non racine seulement
 					int i = getIndexMinPath();
@@ -309,13 +309,13 @@ public class DfsNode extends Node {
 	 */
 	public void updateBack() {
 		// Création de l'esemble qui va permettre le calcul du nouveau back
-		int tmp[] = new int[childrenBack.length + nonTreeHeight.length + 1];
-		System.arraycopy(childrenBack, 0, tmp, 0, childrenBack.length);
-		System.arraycopy(nonTreeHeight, 0, tmp, childrenBack.length, nonTreeHeight.length);
+		int tmp[] = new int[childrenBack.length-1 + nonTreeHeight.length-1 + 1];
+		System.arraycopy(childrenBack, 1, tmp, 0, childrenBack.length-1);
+		System.arraycopy(nonTreeHeight, 1, tmp, childrenBack.length-1, nonTreeHeight.length-1);
 		tmp[tmp.length - 1] = height;
 
 		// Calcul du nouveau back
-		int min = Tools.getNodeList().size(); // valeur à N pour être sûr qu'on obtienne le back minimum
+		int min = 999; // valeur à N pour être sûr qu'on obtienne le back minimum
 
 		for (int i = 0; i < tmp.length; i++) {
 
@@ -325,7 +325,6 @@ public class DfsNode extends Node {
 			}
 
 		}
-		if(back != min)
 			back = min;
 	}
 
@@ -342,8 +341,7 @@ public class DfsNode extends Node {
 		} else {
 
 			for (int i = 1; i < childrenBack.length && !res; i++) {
-				//  childrenBack[i] > -1 est là pour ignorer les valeurs inconnues
-				res = childrenBack[i] > -1 && childrenBack[i] >= height;
+				res = childrenBack[i] >= height;
 			}
 
 		}
