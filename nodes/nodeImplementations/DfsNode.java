@@ -118,6 +118,7 @@ public class DfsNode extends Node {
 			this.nonTreeHeight[i] = -1;
 			this.childrenBack[i]  = -1;
 		}
+
 		if (this.ID == 1) { // Cas du noeud racine
 			this.pere    = -1;
 			this.height  = 0;
@@ -130,31 +131,13 @@ public class DfsNode extends Node {
 			for (int i = 0; i < size; i++) {
 				path.add(r.nextInt(nbVoisin + 2) - 1);
 			}
+
 			this.height = this.path.size() - 1;
-			this.back = 999;
 		}
 
 		// Démarrage du timer d'envoi
 		(new SendTimer()).startRelative(15, this);
 
-	}
-
-	/**
-	 * Permet de savoir si le tableau des alpha voisins est complet ou pas
-	 * 
-	 * @return True si tableau complet false sinon
-	 */
-	public boolean allAlphaAreKnown() {
-
-		for (int i = 1; i < this.alphaVoisins.length; i++) {
-
-			if (this.alphaVoisins[i] == 0) {
-				return false;
-			}
-
-		}
-
-		return true;
 	}
 
 	/**
@@ -166,14 +149,8 @@ public class DfsNode extends Node {
 		while (it.hasNext()) {
 			Edge    e       = it.next();
 			int     index   = this.getIndex(e.endNode);
-			boolean isChild = this.comparaisonPath(path, computePath(this.pathvoisins.get(index), alphaVoisins[index])) == 0;
-
-			/*
-			 * Lorsque nous avons tous les alphas voisins, ça veut dire que tous les voisins
-			 * ont envoyé au moins un fois un message. Donc que le noeud courant a reçu tous
-			 * les path de ses voisins. Ainsi nous pouvons dire si le voisin à qui nous
-			 * allons envoyer le message est le fils du noeud courant.
-			 */
+			boolean isChild = this.comparaisonPath(path,
+					computePath(this.pathvoisins.get(index), alphaVoisins[index])) == 0;
 
 			this.send(new DFSMessage(this, index, this.back, this.path, isChild), e.endNode);
 		}
@@ -283,7 +260,7 @@ public class DfsNode extends Node {
 
 				// ALGO2
 				this.childrenBack[canalSender]  = this.children.indexOf(msg.sender.ID) > -1 ? msg.back : -1;
-				this.nonTreeHeight[canalSender] = this.isNonTreeNode(msg.sender.ID) ? msg.path.size() -2 : -1;
+				this.nonTreeHeight[canalSender] = this.isNonTreeNode(msg.sender.ID) ? msg.path.size() - 1 : -1;
 
 				if (ID > 1) { // Noeud non racine seulement
 					int i = getIndexMinPath();
@@ -309,13 +286,13 @@ public class DfsNode extends Node {
 	 */
 	public void updateBack() {
 		// Création de l'esemble qui va permettre le calcul du nouveau back
-		int tmp[] = new int[childrenBack.length-1 + nonTreeHeight.length-1 + 1];
-		System.arraycopy(childrenBack, 1, tmp, 0, childrenBack.length-1);
-		System.arraycopy(nonTreeHeight, 1, tmp, childrenBack.length-1, nonTreeHeight.length-1);
+		int tmp[] = new int[childrenBack.length - 1 + nonTreeHeight.length - 1 + 1];
+		System.arraycopy(childrenBack, 1, tmp, 0, childrenBack.length - 1);
+		System.arraycopy(nonTreeHeight, 1, tmp, childrenBack.length - 1, nonTreeHeight.length - 1);
 		tmp[tmp.length - 1] = height;
 
 		// Calcul du nouveau back
-		int min = 999; // valeur à N pour être sûr qu'on obtienne le back minimum
+		int min = Tools.getNodeList().size(); // valeur à N pour être sûr qu'on obtienne le back minimum
 
 		for (int i = 0; i < tmp.length; i++) {
 
@@ -325,17 +302,19 @@ public class DfsNode extends Node {
 			}
 
 		}
-			back = min;
+
+		back = min;
 	}
 
 	/**
 	 * Vérifie que le noeud courant est un cut node ou pas
+	 * 
 	 * @return True si c'est un cut node false sinon
 	 */
 	public boolean isCutNode() {
 		boolean res = false;
 
-		//Cas de la racine
+		// Cas de la racine
 		if (ID == 1) {
 			res = children.size() >= 2;
 		} else {
